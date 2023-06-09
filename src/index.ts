@@ -1,244 +1,56 @@
 import { Plugin, showMessage, confirm, Dialog, Menu, isMobile, openTab, adaptHotkey } from "siyuan";
-import "./index.scss";
+import axios from "axios";
 
-import HelloExample from "./hello.svelte";
+import "./index.scss";
 import SettingPannel from "./libs/setting-panel.svelte";
 
-const STORAGE_NAME = "menu-config";
-const TAB_TYPE = "custom_tab";
-const DOCK_TYPE = "dock_tab";
+import WereadLogin from "./weread/login";
+import Cookie from "./weread/cookie";
+import WereadApi from "./weread/api";
 
-export default class SamplePlugin extends Plugin {
-
-    private customTab: () => any;
+export default class Weread extends Plugin {
 
     async onload() {
-        showMessage("Hello SiYuan Plugin");
-        this.data[STORAGE_NAME] = {readonlyText: "Readonly"};
-
-        const topBarElement = this.addTopBar({
-            icon: "iconEmoji",
-            title: this.i18n.addTopBarIcon,
+        
+        this.addTopBar({
+            // icon: '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"><path d="m40.5 5.5h-33a2 2 0 0 0 -2 2v33a2 2 0 0 0 2 2h33a2 2 0 0 0 2-2v-33a2 2 0 0 0 -2-2z"/><path d="m5.5 36.526h15.5c1.7029 0 2.3445 1.4975 3 2.55.6449-1.0244 1.3027-2.55 3-2.55h15.5"/><path d="m39.654 28.3239c0 2.6134-3.0238 5.0115-6.4091 5.0115a5.0935 5.0935 0 0 1 -2.3859-.3718l-1.7487.8227.1638-1.7436c-1.45-.7249-1.9192-2.7859-1.8793-3.7187.1118-2.611 2.7444-4.7319 6.13-4.7319s6.13 2.1186 6.13 4.7319z"/></g><circle cx="32.3034" cy="27.575" r=".75"/><circle cx="35.5207" cy="27.575" r=".75"/></svg>',
+            icon: '<svg t="1686192115019" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="642" width="200" height="200"><path d="M204.078 0h615.845q202.07 0 202.07 202.07v615.845q0 202.07-202.07 202.07H204.077q-202.07 0-202.07-202.07V202.069Q2.008 0 204.078 0z" fill="#4496D3" p-id="643"></path><path d="M616.087 869.276a106.657 106.657 0 0 0-102.641 77.663 106.657 106.657 0 0 0-102.641-77.663H7.63A202.11 202.11 0 0 0 204.077 1024h615.846a202.11 202.11 0 0 0 196.447-154.724z m255.437-128.14c-44.654 44.172-99.026 54.934-157.816 35.217-19.356-6.506-35.258-8.032-52.204 3.212a73.326 73.326 0 0 1-11.324 3.775c15.46-26.865 4.015-43.65-9.036-62.685-28.993-42.285-23.09-96.738 11.405-136.051 56.22-64.251 166.731-64.251 223.112 0 40.96 46.662 40.076 112.64-4.137 156.531z" fill="#FFFFFF" p-id="644"></path><path d="M818.96 611.187a20.078 20.078 0 0 0-20.883 19.276 19.516 19.516 0 0 0 18.473 21.444 20.078 20.078 0 0 0 22.006-18.03 20.68 20.68 0 0 0-19.597-22.69z m-108.906 0a20.078 20.078 0 0 0-20.079 22.207 19.556 19.556 0 0 0 21.404 18.472 20.078 20.078 0 0 0 19.275-20.921 20.922 20.922 0 0 0-20.6-19.758z" fill="#4496D3" p-id="645"></path></svg>',
+            title: 'weread',
             position: "left",
-            callback: () => {
-                this.addMenu(topBarElement.getBoundingClientRect());
+            callback: async () => {
+                // const weread = new WereadLogin(this);
+                // weread.openWereadTab();
+
+                const cookie = new Cookie(this);
+                cookie.checkCookie()
+
+                // const api = new WereadApi(this)
+                // const book_id = '';
+                // let response = await api.getNotebooks();
+                // let response = await api.getRecentBooks();
+                // let response = await api.getBookSync();
+                // let response = await api.getBook(book_id);
+                // let response = await api.getBookChapterInfos(book_id);
+                // let response = await api.getNotebookHighlights(book_id);
+                // let response = await api.getNotebookReviews(book_id);
+                // console.log(response)
+
+                // let books = await getNotebooks(cookies)
+
+                // console.log('books')
+
+                // this.axios.get('https://www.mdzz2048.com')
+                //     .then((response) => {
+                //         console.log(response)
+                //     })
             }
         });
-
-        let div = document.createElement("div");
-        new HelloExample({
-            target: div,
-            props: {
-                name: this.i18n.name,
-                i18n: this.i18n.hello
-            }
-        });
-        this.customTab = this.addTab({
-            type: TAB_TYPE,
-            init() {
-                this.element.appendChild(div);
-                console.log(this.element);
-            },
-            destroy() {
-                console.log("destroy tab:", TAB_TYPE);
-            }
-        });
-
-        this.addDock({
-            config: {
-                position: "LeftBottom",
-                size: {width: 200, height: 0},
-                icon: "iconEmoji",
-                title: "Custom Dock",
-            },
-            data: {
-                text: "This is my custom dock"
-            },
-            type: DOCK_TYPE,
-            init() {
-                this.element.innerHTML = `<div class="fn__flex-1 fn__flex-column">
-    <div class="block__icons">
-        <div class="block__logo">
-            <svg><use xlink:href="#iconEmoji"></use></svg>
-            Custom Dock
-        </div>
-        <span class="fn__flex-1 fn__space"></span>
-        <span data-type="min" class="block__icon b3-tooltips b3-tooltips__sw" aria-label="Min ${adaptHotkey("⌘W")}"><svg><use xlink:href="#iconMin"></use></svg></span>
-    </div>
-    <div class="fn__flex-1 plugin-sample__custom-dock">
-        ${this.data.text}
-    </div>
-</div>`;
-            },
-            destroy() {
-                console.log("destroy dock:", DOCK_TYPE);
-            }
-        });
-
-    }
-
-    onLayoutReady() {
-        this.loadData(STORAGE_NAME);
     }
 
     onunload() {
         console.log(this.i18n.byePlugin);
         showMessage("Goodbye SiYuan Plugin");
         console.log("onunload");
-    }
-
-    private wsEvent({ detail }: any) {
-        console.log(detail);
-    }
-
-    private blockIconEvent({detail}: any) {
-        console.log(detail);
-        detail.menu.addSeparator(0);
-        const ids: string[] = [];
-        detail.blockElements.forEach((item: HTMLElement) => {
-            ids.push(item.getAttribute("data-node-id"));
-        });
-        detail.menu.addItem({
-            index: 1,
-            iconHTML: "",
-            type: "readonly",
-            label: "IDs<br>" + ids.join("<br>"),
-        });
-    }
-
-    private async addMenu(rect: DOMRect) {
-        const menu = new Menu("topBarSample", () => {
-            console.log(this.i18n.byeMenu);
-        });
-        menu.addItem({
-            icon: "iconHelp",
-            label: "Confirm",
-            click() {
-                confirm("Confirm", "Is this a confirm?", () => {
-                    showMessage("confirm");
-                }, () => {
-                    showMessage("cancel");
-                });
-            }
-        });
-        menu.addItem({
-            icon: "iconFeedback",
-            label: "Message",
-            click: () => {
-                showMessage(this.i18n.helloPlugin);
-            }
-        });
-        menu.addItem({
-            icon: "iconInfo",
-            label: "Dialog",
-            click: () => this.openHelloInDialog()
-        });
-        menu.addItem({
-            icon: "iconLayoutBottom",
-            label: "Open Tab",
-            click: () => {
-                openTab({
-                    custom: {
-                        icon: "iconEmoji",
-                        title: "Custom Tab",
-                        data: {
-                            text: "This is my custom tab",
-                        },
-                        fn: this.customTab
-                    },
-                });
-            }
-        });
-        menu.addItem({
-            icon: "iconLayout",
-            label: "Open Float Layer(open help)",
-            click: () => {
-                this.addFloatLayer({
-                    ids: ["20230523173319-xj1l3qu", "20230523173321-55o0w2n"],
-                    defIds: ["20230523173323-imgm9tp", "20230523173324-cxu98t3"],
-                    x: window.innerWidth - 768 - 120,
-                    y: 32
-                });
-            }
-        });
-        menu.addItem({
-            icon: "iconTrashcan",
-            label: "Remove Data",
-            click: () => {
-                this.removeData(STORAGE_NAME).then(() => {
-                    this.data[STORAGE_NAME] = {readonlyText: "Readonly"};
-                });
-            }
-        });
-        menu.addItem({
-            icon: "iconScrollHoriz",
-            label: "Event Bus",
-            type: "submenu",
-            submenu: [{
-                icon: "iconSelect",
-                label: "On ws-main",
-                click: () => {
-                    this.eventBus.on("ws-main", this.wsEvent);
-                }
-            }, {
-                icon: "iconClose",
-                label: "Off ws-main",
-                click: () => {
-                    this.eventBus.off("ws-main", this.wsEvent);
-                }
-            }, {
-                icon: "iconSelect",
-                label: "On click-blockicon",
-                click: () => {
-                    this.eventBus.on("click-blockicon", this.blockIconEvent);
-                }
-            }, {
-                icon: "iconClose",
-                label: "Off click-blockicon",
-                click: () => {
-                    this.eventBus.off("click-blockicon", this.blockIconEvent);
-                }
-            }, {
-                icon: "iconSelect",
-                label: "On click-pdf",
-                click: () => {
-                    this.eventBus.on("click-pdf", this.wsEvent);
-                }
-            }, {
-                icon: "iconClose",
-                label: "Off click-pdf",
-                click: () => {
-                    this.eventBus.off("click-pdf", this.wsEvent);
-                }
-            }, {
-                icon: "iconSelect",
-                label: "On click-editorcontent",
-                click: () => {
-                    this.eventBus.on("click-editorcontent", this.wsEvent);
-                }
-            }, {
-                icon: "iconClose",
-                label: "Off click-editorcontent",
-                click: () => {
-                    this.eventBus.off("click-editorcontent", this.wsEvent);
-                }
-            }]
-        });
-        menu.addSeparator();
-        menu.addItem({
-            icon: "iconSparkles",
-            label: this.data[STORAGE_NAME] || "Readonly",
-            type: "readonly",
-        });
-        if (isMobile()) {
-            menu.fullscreen();
-        } else {
-            menu.open({
-                x: rect.right,
-                y: rect.bottom,
-                isLeft: true,
-            });
-        }
     }
 
     openSetting(): void {
@@ -254,24 +66,6 @@ export default class SamplePlugin extends Plugin {
         });
         let pannel = new SettingPannel({
             target: dialog.element.querySelector("#SettingPanel"),
-        });
-    }
-
-    private openHelloInDialog() {
-        let dialog = new Dialog({
-            title: "Hello World",
-            content: `<div id="helloPanel"></div>`,
-            destroyCallback(options) {
-                //You must destroy the component when the dialog is closed
-                hello.$destroy();
-            },
-        });
-        let hello = new HelloExample({
-            target: dialog.element.querySelector("#helloPanel"),
-            props: {
-                name: this.i18n.name,
-                i18n: this.i18n.hello
-            }
         });
     }
 }

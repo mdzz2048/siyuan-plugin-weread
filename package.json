@@ -1,11 +1,11 @@
 {
-  "name": "plugin-sample-vite-svelte",
-  "version": "0.0.6",
+  "name": "siyuan-weread-sync",
+  "version": "0.0.1",
   "type": "module",
   "description": "",
   "repository": "",
   "homepage": "",
-  "author": "",
+  "author": "mdzz2048",
   "license": "GPL-3.0",
   "scripts": {
     "make-link": "node  --no-warnings ./scripts/make_dev_link.js",
@@ -28,5 +28,11 @@
     "vite": "^4.3.7",
     "vite-plugin-static-copy": "^0.15.0",
     "vite-plugin-zip-pack": "^1.0.5"
+  },
+  "dependencies": {
+    "axios": "^1.4.0", 
+    "@workspace/components": "workspace:^",
+    "@workspace/types": "workspace:^",
+    "@workspace/utils": "workspace:^"
   }
 }

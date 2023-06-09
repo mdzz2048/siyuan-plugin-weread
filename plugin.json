@@ -1,24 +1,27 @@
 {
-  "name": "plugin-sample-vite-svelte",
-  "author": "frostime",
-  "url": "https://github.com/siyuan-note/plugin-sample-vite-svelte",
-  "version": "0.0.6",
+  "name": "siyuan-weread-sync",
+  "author": "mdzz2048",
+  "url": "https://github.com/mdzz2048/siyuan-weread-sync",
+  "version": "0.0.1",
   "minAppVersion": "2.9.0",
+  "backends": ["windows", "linux", "darwin"],
+  "frontends": ["desktop"],
   "displayName": {
-    "en_US": "Plugin sample with vite and svelte",
-    "zh_CN": "插件样例 vite + svelte 版"
+    "en_US": "weread-sync",
+    "zh_CN": "微信读书插件"
   },
   "description": {
-    "en_US": "SiYuan plugin sample with vite and svelte",
-    "zh_CN": "使用 vite 和 svelte 开发的思源插件样例"
+    "en_US": "Sync weread notes",
+    "zh_CN": "同步微信读书笔记"
   },
   "readme": {
     "en_US": "README.md",
     "zh_CN": "README_zh_CN.md"
   },
   "funding": {
-    "custom": [
-      "https://afdian.net/a/frostime"
-    ]
+    "openCollective": "",
+    "patreon": "",
+    "github": "",
+    "custom": []
   }
 }
