@@ -21,8 +21,8 @@ export default class Weread extends Plugin {
                 // const weread = new WereadLogin(this);
                 // weread.openWereadTab();
 
-                const cookie = new Cookie(this);
-                cookie.checkCookie()
+                // const cookie = new Cookie(this);
+                // cookie.checkCookie()
 
                 // const api = new WereadApi(this)
                 // const book_id = '';
@@ -37,7 +37,7 @@ export default class Weread extends Plugin {
 
                 // let books = await getNotebooks(cookies)
 
-                // console.log('books')
+                console.log('books')
 
                 // this.axios.get('https://www.mdzz2048.com')
                 //     .then((response) => {
