@@ -30,7 +30,8 @@
     "vite-plugin-zip-pack": "^1.0.5"
   },
   "dependencies": {
-    "axios": "^1.4.0", 
-    "deepmerge": "^4.3.1"
+    "axios": "^1.4.0",
+    "deepmerge": "^4.3.1",
+    "jsonpath": "^1.1.1"
   }
 }
