@@ -6,5 +6,8 @@ export const DEFAULT_CONFIG = {
         highlightTemplate: '', 
         noteTemplate: ''
     },
+    weread: {
+        filterHighlight: '',
+    }, 
     Cookie: ''
 }

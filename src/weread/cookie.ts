@@ -29,13 +29,13 @@ export default class Cookie extends Plugin {
                     console.log(cookies_str)
 
                     // cookie 数据保存
-                    let config = await this.loadData('config.json')
+                    let config = await this.loadData('config')
                     if (config === '') {
                         config = {'Cookie': cookies_str}
                     } else {
                         config.Cookie = cookies_str
                     }
-                    this.saveData('config.json', config)
+                    this.saveData('config', config)
                 }
             }).catch((error) => {
                 console.log(error)

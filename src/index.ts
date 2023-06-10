@@ -6,12 +6,11 @@ import deepmerge from "deepmerge";
 
 import WereadLogin from "./weread/login";
 import Cookie from "./weread/cookie";
-import WereadApi from "./weread/api";
 import { DEFAULT_CONFIG } from "./setting/config/default";
-import { error } from "console";
 
 export default class Weread extends Plugin {
     static readonly GLOBAL_CONFIG_NAME = "config";
+    
     protected config: any;
 
     constructor(options: any) {
@@ -101,6 +100,10 @@ export default class Weread extends Plugin {
         });
         let pannel = new Settings({
             target: dialog.element.querySelector("#WereadSetting"),
+            props: {
+                config: this.config,
+                plugin: this,
+            }
         });
     }
 
@@ -112,7 +115,7 @@ export default class Weread extends Plugin {
         if (config && config !== this.config) {
             this.config = config;
         }
-        return this.saveData('setting.json', config);
+        return this.saveData(Weread.GLOBAL_CONFIG_NAME, this.config);
     }
 }
 
