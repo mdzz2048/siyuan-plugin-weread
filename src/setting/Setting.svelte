@@ -24,6 +24,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
 
     import { showMessage } from "siyuan";
     import { lsNotebooks } from "../api";
+    import { getNotebooks } from "../weread/api";
     import { ItemType, type IOptions } from "./item/item";
     import { ITab } from "./tab";
 
@@ -34,14 +35,12 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     import Item from "./item/Item.svelte";
     import Input from "./item/Input.svelte";
     import CardGroup from "./item/CardGroup.svelte";
-    import Card from "./item/Card.svelte";
+    // import Card from "./item/Card.svelte";
 
     import Weread from "..";
-    import WereadApi from "../weread/api";
 
     export let config: any;
     export let plugin: Weread;
-    export let api: WereadApi;
 
     let block = false;
     let normal = false;
@@ -64,6 +63,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
 
     let options_books: IOptions = [];
     let options_notebook: IOptions = [];
+    let card_list = [];
     
     function updated() {
         plugin.updateConfig(config);
@@ -80,32 +80,61 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     //             );
     // }
 
+    async function getHighlight() {
+        // let card = "<Card title='1' text='1' settingKey='22' settingValue='666' />";
+        let card = setCardStyle('value', 'title', 'text');
+        card_list.push(card);
+
+        return card_list
+    }
+
+    function setCardStyle(value: string, title: any, text: any) {
+        return `<div class="weread-card" style=" flex: auto; height: 100px; width: 100%; border-radius: 5px; background-color: var(--b3-menu-background); box-shadow: 1px var(--b3-theme-on-background); padding: 5px 0; margin: 5px 0;">
+                    <input
+                        id="weread-card-checkbox"
+                        name="weread-card-name"
+                        type="checkbox"
+                        value=${value}
+                    />
+                    <label for="weread-card-checkbox">
+                        <div class="weread-card-title" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0px 0px 5px 0px; padding: 0px 0px 0px 6.5px;">
+                            <slot name="title">${title}</slot>
+                        </div>
+                        <div class="weread-card-text" style="background-color: #ebeaf075; border-left: 1.5px solid var(--b3-scroll-color); padding: 0px 5px; /* 隐藏多余文字 */ display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden;">
+                            <slot name="text">${text}</slot>
+                        </div>
+                    </label>
+                </div>`
+    }
+
     onMount(async () => {
-        options_notebook = await get_notebook()
+        // options_books = await get_books();
+        // options_notebook = await get_notebook();
+
+        async function get_books() {
+            let response = await getNotebooks();
+
+            for (var i = 1; i < response.books.length; i++) {
+                let name = response.books[i].book['title'];
+                // 处理过长的书名
+                name = name.length > 30 ? name.substr(0, 30) + '...' : name;
+                options_books.push({ key: i, text: name})
+            }
+
+            return options_books;
+        }
 
         async function get_notebook() {
             let response = await lsNotebooks();
 
             for (var i = 1; i < response.notebooks.length; i++) {
+                let id = response.notebooks[i].id;
                 let name = response.notebooks[i].name;
-                options_notebook.push({ key: i, text: name });
+                options_notebook.push({ key: id, text: name });
             }
 
             return options_notebook;
         }
-
-        // async function get_books() {
-        //     let options_books:{ key: number, text: string}[];
-        //     let response = await api.getNotebooks();
-
-        //     for (var i = 1; i < response.books.length; i++) {
-        //         let name = response.books[i].book['title'];
-        //         options_books.push({ key: i, text: name})
-        //     }
-
-        //     console.log(options_books)
-        //     return options_books;
-        // }
 
         showMessage("Setting panel opened");
     });
@@ -154,9 +183,9 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                 slot="input"
                 type={ItemType.select}
                 settingKey="saveNotebook"
-                settingValue=1
+                settingValue={config.siyuan.notebook}
                 on:changed={ e => {
-                    config.input.notebook = e.detail.value;
+                    config.siyuan.notebook = e.detail.value;
                     updated()
                 }}
                 options={options_notebook}
@@ -173,9 +202,10 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                 slot="input"
                 type={ItemType.select}
                 settingKey="docName"
-                settingValue=1
+                settingValue={config.siyuan.docName}
                 on:changed={event => {
-                    showMessage(`Select changed: ${event.detail.key} = ${event.detail.value}`);
+                    config.siyuan.docName = event.detail.value;
+                    updated()
                 }}
                 options={[
                     { key: "1", text: "书名" },
@@ -193,10 +223,11 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     slot="input"
                     type={ItemType.textarea}
                     settingKey="docTemplate"
-                    settingValue=""
+                    settingValue={config.siyuan.docTemplate}
                     placeholder="Input something"
                     on:changed={event => {
-                        showMessage(`Input changed: ${event.detail.key} = ${event.detail.value}`);
+                        config.siyuan.docTemplate = event.detail.value;
+                        updated()
                     }}
                 />
             </MiniItem>
@@ -206,10 +237,11 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     slot="input"
                     type={ItemType.textarea}
                     settingKey="highlightTemplate"
-                    settingValue=""
+                    settingValue={config.siyuan.highlightTemplate}
                     placeholder="Input something"
                     on:changed={event => {
-                        showMessage(`Input changed: ${event.detail.key} = ${event.detail.value}`);
+                        config.siyuan.highlightTemplate = event.detail.value;
+                        updated()
                     }}
                 />
             </MiniItem>
@@ -219,10 +251,11 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     slot="input"
                     type={ItemType.textarea}
                     settingKey="noteTemplate"
-                    settingValue=""
+                    settingValue={config.siyuan.noteTemplate}
                     placeholder="Input something"
                     on:changed={event => {
-                        showMessage(`Input changed: ${event.detail.key} = ${event.detail.value}`);
+                        config.siyuan.noteTemplate = event.detail.value;
+                        updated()
                     }}
                 />
             </MiniItem>
@@ -241,8 +274,8 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                 settingKey="importBook"
                 settingValue=1
                 on:changed={ e => {
-                    config.input.notebook = e.detail.value;
-                    updated()
+                    showMessage(`选择: ${e.detail.value}`)
+                    // todo: 更新卡片视图
                 }}
                 options={options_books}
             />
@@ -256,9 +289,9 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                 slot="input"
                 type={ItemType.select}
                 settingKey="filterHighlight"
-                settingValue=1
+                settingValue={config.weread.filterHighlight}
                 on:changed={ e => {
-                    config.input.notebook = e.detail.value;
+                    config.weread.filterHighlight = e.detail.value;
                     updated()
                 }}
                 options={[
@@ -268,11 +301,8 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                 ]}
             />
         </Item>
-        <CardGroup title="">
-            <Card
-                title='1'
-                text='1'
-            />                                                                                                          
+        <CardGroup title="">         
+            {@html card_list}                                                                                           
         </CardGroup>
         <Group title="" style=""> 
             <MiniItem>
@@ -282,7 +312,15 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     settingKey="getInfo"
                     settingValue="获取信息"
                     on:clicked={() => {
-                        showMessage("正在获取书籍信息");
+                        let checkbox = document.getElementsByName('weread-card-name');
+                        let checkedbox = [];
+                        for (let i = 0; i < checkbox.length; i++) {
+                            if (checkbox[i]['checked']) {
+                                checkedbox.push(checkbox[i]['value']);
+                            }
+                        }
+                        console.log(checkedbox);
+                        // showMessage("正在获取书籍信息");
                     }}
                 />
             </MiniItem>
@@ -292,8 +330,9 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     type={ItemType.button}
                     settingKey="importTest"
                     settingValue="导入测试"
-                    on:clicked={() => {
-                        showMessage("正在导入");
+                    on:clicked={async () => {
+                        card_list = await getHighlight();
+                        // showMessage("正在导入");
                     }}
                 />
             </MiniItem>

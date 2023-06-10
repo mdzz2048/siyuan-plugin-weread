@@ -1,16 +1,37 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
+    
     //Optional
     export let title: string = ""; // 笔记
     export let text: string = ""; // 标注
+
+    export let settingKey: string;
+    export let settingValue: any;
+
+    const dispatch = createEventDispatcher();
+
+    function changed(event: Event) {
+        dispatch("changed", { key: settingKey, value: settingValue, event });
+    }
 </script>
 
+<!-- todo: 卡片复选框悬浮显示 -->
 <div class="weread-card">
-    <div class="weread-card-title">
-        <slot name="title">{@html title}</slot>
-    </div>
-    <div class="weread-card-text">
-        <slot name="text">{@html text}</slot>
-    </div>
+    <input
+        id="weread-card-checkbox"
+        name="weread-card-name"
+        type="checkbox"
+        value={settingValue}
+        on:change={changed}
+    />
+    <label for="weread-card-checkbox">
+        <div class="weread-card-title">
+            <slot name="title">{@html title}</slot>
+        </div>
+        <div class="weread-card-text">
+            <slot name="text">{@html text}</slot>
+        </div>
+    </label>
 </div>
 
 <style lang="css">
