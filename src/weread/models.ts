@@ -1,60 +1,64 @@
+export type Notebook = {
+	metaData: Metadata;
+	chapterHighlights: ChapterHighlight[];
+	chapterReviews: ChapterReview[];
+};
+
+export type Metadata = {
+    bookId: string;			// 书籍 ID
+	bookVersion: number		// 书籍版本
+	title: string;			// 书名
+	author: string;			// 作者
+	cover: string;			// 封面 URL
+	isbn?: string;			// ISBN
+	intro?: string;			// 简介
+    format?: string;		// 书籍格式
+	publishTime?: string;	// 出版时间
+	category?: string;		// 书籍类别
+	publisher?: string;		// 出版社
+	readUpdateTime?: number // 最后阅读时间
+	reviewCount?: number;	// 想法数量
+	bookmarkCount?: number;	// 标注数量?
+	noteCount?: number;		// 笔记数量?
+}
+
 export type Highlight = {
-	bookmarkId: string;
-	created: number;
-	createTime: string;
-	chapterUid: number;
-	chapterTitle: string;
-	markText: string;
-	style: number;
-	reviewContent?: string;
-	range: string;
+	bookId: string;			// 书籍 ID
+	bookVersion?: number;	// 书籍版本
+	chapterUid: number;		// 章节 ID
+	chapterTitle: string;	// 章节标题
+	bookmarkId: string;		// 标记 ID
+	markText: string; 		// 标记文本
+	createTime: number;		// 创建时间
+	style?: number;			// 样式 ID
+	type?: number;			// * 功能不明
+	range?: string;			// * 章节定位
 }
 
 export type ChapterHighlight = {
 	chapterUid: number;
 	chapterTitle: string;
-	chapterReviewCount: number;
-	highlights: Highlight[];
-}
-
-export type Metadata = {
-    bookId: string;
-	title: string;
-	author: string;
-	cover: string;
-    format?: string;
-	url: string;
-	publishTime: string;
-	reviewCount: number;
-	isbn?: string;
-	category?: string;
-	publisher?: string;
-	intro?: string;
-	duplicate?: boolean;
-	lastReadDate: string;
+	chapterHighlightCount: number;
+	chapterHighlights: Highlight[];
 }
 
 export type Review = {
-    reviewId: string;
-	chapterUid?: number;
-	chapterTitle?: string;
-	created: number;
-	createTime: string;
-	content: string;
-	mdContent?: string;
-	abstract?: string;
-	range?: string;
-	type: number;
+	reviewId: string;		// 想法 ID
+	abstract?: string;		// 标注内容
+	content?: string;		// 你的想法
+	bookId: string;			// 书籍 ID
+	bookVersion?: number;	// 书籍版本
+	chapterUid: number;		// 章节 ID
+	chapterTitle: string;	// 章节标题
+	createTime: number;		// 创建时间
+	atUserVids?: any;		// * 用户 ID，暂时用不到
+	type?: number;			// * 功能不明
+	range?: string;			// * 章节定位
 }
-
-export type BookReview = {
-	chapterReviews: ChapterReview[];
-	bookReviews: Review[];
-};
 
 export type ChapterReview = {
 	chapterUid: number;
 	chapterTitle: string;
-	chapterReviews?: Review[];
-	reviews: Review[];
+	chapterReviewCount: number;
+	chapterReviews: Review[];
 };
