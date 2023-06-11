@@ -18,13 +18,14 @@
 <!-- todo: 卡片复选框悬浮显示 -->
 <div class="weread-card">
     <input
-        id="weread-card-checkbox"
+        id={settingKey}
         name="weread-card-name"
         type="checkbox"
         value={settingValue}
+        class="checkbox-input"
         on:change={changed}
     />
-    <label for="weread-card-checkbox">
+    <label for={settingKey}>
         <div class="weread-card-title">
             <slot name="title">{@html title}</slot>
         </div>
@@ -37,7 +38,7 @@
 <style lang="css">
     .weread-card {
         flex: auto;
-        height: 100px;
+        height: 120px;
         width: 100%;
 
         border-radius: 5px;
@@ -64,5 +65,17 @@
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 4;
         overflow: hidden;
+    }
+
+    .checkbox-input {
+        opacity: 0;
+        z-index: 1;
+        position: absolute;
+        right: 0;
+        top: 0;
+    }
+    
+    .checkbox-input:hover {
+        opacity: 1;
     }
 </style>

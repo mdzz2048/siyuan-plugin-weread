@@ -1,4 +1,4 @@
-import { getCookieBykey } from "./cookie";
+import { getCookieBykey } from "../utils/cookie";
 import { getFile } from "../api";
 import axios from "axios";
 
