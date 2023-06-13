@@ -34,9 +34,7 @@ export async function refreshCookie() {
             return getCookieString(cookie);
         }
     }
-
-    // 刷新失败显示窗口，重新登录
-    window.show();
+    window.close();
     return '';
 }
 

@@ -4,7 +4,7 @@ import "./index.scss";
 import Settings from "./setting/Setting.svelte";
 import deepmerge from "deepmerge";
 
-import { refreshCookie, updateCookie } from "./utils/cookie";
+import { checkCookie, refreshCookie, updateCookie } from "./utils/cookie";
 import { syncNotebook, syncNotebooks } from "./weread/syncNotebooks";
 import { DEFAULT_CONFIG } from "./setting/config/default";
 
@@ -24,6 +24,20 @@ export default class Weread extends Plugin {
             title: 'weread',
             position: "left",
             callback: async () => {
+                // 点击图标时 Cookie 可能过期，需要重新检查
+                let cookie = await checkCookie();
+                if (cookie === '') {
+                    cookie = await refreshCookie();
+                    if (cookie === '') {
+                        this.config.Cookie = '';
+                        this.updateConfig(this.config);
+                        showMessage('微信读书鉴权失败，请重新登录');
+                    }
+                    console.log('Cookie check failed!');
+                }
+                console.log('Cookie check success!')
+                this.updateConfig(updateCookie(cookie, this.config));
+
                 if (this.config.siyuan.notebook !== '') {
                     // 同步所有笔记
                     // await syncNotebooks(this.config);
@@ -45,7 +59,20 @@ export default class Weread extends Plugin {
             menu.addItem({
                 icon: 'iconSettings', 
                 label: '设置', 
-                click: () => {
+                click: async () => {
+                    // 打开设置时 Cookie 可能过期，需要重新检查
+                    let cookie = await checkCookie();
+                    if (cookie === '') {
+                        cookie = await refreshCookie();
+                        if (cookie === '') {
+                            this.config.Cookie = '';
+                            this.updateConfig(this.config);
+                            showMessage('微信读书鉴权失败，请重新登录');
+                        }
+                        console.log('Cookie check failed!');
+                    }
+                    console.log('Cookie check success!')
+                    this.updateConfig(updateCookie(cookie, this.config));
                     this.openSetting();
                 }
             });
@@ -68,9 +95,10 @@ export default class Weread extends Plugin {
         // 检测 Cookie 是否可用
         let cookie = await refreshCookie();
         if (cookie === '') {
-            showMessage('获取微信读书 Cookie 失败，请重新登录');
+            showMessage('微信读书鉴权失败，请重新登录');
+            console.log('Cookie refresh failed!')
         }
-        console.log('Cookie update success!')
+        console.log('Cookie refresh success!')
         this.updateConfig(updateCookie(cookie, this.config));
     }
 
