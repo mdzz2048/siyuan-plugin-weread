@@ -203,9 +203,11 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
 
     onMount(async () => {
         login = await isLogin();
-        options_books = await get_books();
         options_notebook = await get_notebook();
-
+        if (login) {
+            // 没有登录就不加载书单列表了
+            options_books = await get_books();
+        }
 
         showMessage("Setting panel opened");
     });
@@ -239,9 +241,18 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     type={ItemType.button}
                     settingKey="login"
                     settingValue="退出登录"
-                    on:clicked={() => {
+                    on:clicked={async () => {
                         const login = new WereadLogin();
                         login.openWereadTab();
+                        login.Window.on('close', async (event) => {
+                            // REF: https://www.electronjs.org/docs/latest/api/web-contents/#event-will-prevent-unload
+                            // 拦截默认关闭设置，保存配置
+                            event.preventDefault();
+                            let cookie = await login.getWereadCookie();
+                            config.Cookie = cookie;
+                            updated()
+                            console.log('正在关闭');
+                        })
                     }}
                 />
             </Item>
@@ -258,9 +269,17 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     type={ItemType.button}
                     settingKey="login"
                     settingValue="登录"
-                    on:clicked={() => {
+                    on:clicked={async () => {
                         const login = new WereadLogin();
                         login.openWereadTab();
+                        login.Window.on('close', async (event) => {
+                            // 拦截默认关闭设置，保存配置
+                            event.preventDefault();
+                            let cookie = await login.getWereadCookie();
+                            config.Cookie = cookie;
+                            updated()
+                            console.log('正在登录');
+                        })
                     }}
                 />
             </Item>

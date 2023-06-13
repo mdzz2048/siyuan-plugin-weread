@@ -1,8 +1,9 @@
 import { showMessage } from "siyuan";
+import { parseCookies, getCookieString } from "../utils/cookie";
 
 export default class WereadLogin {
-    private BroserWindow: any;
-    private Window: any;
+    public BroserWindow: any;
+    public Window: any;
 
     constructor() {
         const { BrowserWindow} = globalThis.require("@electron/remote");
@@ -28,5 +29,13 @@ export default class WereadLogin {
 
     closeWereadTab() {
         this.Window.close()
+    }
+
+    async getWereadCookie() {
+        let cookie = await this.Window.webContents.session.cookies.get({ url: 'https://weread.qq.com/' });
+        cookie = parseCookies(cookie);
+        let wr_vid = cookie.filter((item: { name: string; }) => item.name === 'wr_vid')[0];
+        let wr_skey = cookie.filter((item: { name: string; }) => item.name === 'wr_skey')[0];
+        return wr_vid && wr_skey ? getCookieString(cookie) : '';
     }
 }

@@ -1,10 +1,10 @@
-import { Plugin, showMessage, confirm, Dialog, Menu, isMobile, openTab, adaptHotkey } from "siyuan";
+import { Plugin, showMessage, Dialog, Menu, isMobile, openTab, adaptHotkey } from "siyuan";
 
 import "./index.scss";
 import Settings from "./setting/Setting.svelte";
 import deepmerge from "deepmerge";
 
-import { checkCookie, refreshCookie, updateCookie } from "./utils/cookie";
+import { checkCookie, refreshCookie, getCookieBykey } from "./utils/cookie";
 import { syncNotebook, syncNotebooks } from "./weread/syncNotebooks";
 import { DEFAULT_CONFIG } from "./setting/config/default";
 
@@ -25,18 +25,7 @@ export default class Weread extends Plugin {
             position: "left",
             callback: async () => {
                 // 点击图标时 Cookie 可能过期，需要重新检查
-                let cookie = await checkCookie();
-                if (cookie === '') {
-                    cookie = await refreshCookie();
-                    if (cookie === '') {
-                        this.config.Cookie = '';
-                        this.updateConfig(this.config);
-                        showMessage('微信读书鉴权失败，请重新登录');
-                    }
-                    console.log('Cookie check failed!');
-                }
-                console.log('Cookie check success!')
-                this.updateConfig(updateCookie(cookie, this.config));
+                await this.checkCookieConifg(this.config);
 
                 if (this.config.siyuan.notebook !== '') {
                     // 同步所有笔记
@@ -60,19 +49,6 @@ export default class Weread extends Plugin {
                 icon: 'iconSettings', 
                 label: '设置', 
                 click: async () => {
-                    // 打开设置时 Cookie 可能过期，需要重新检查
-                    let cookie = await checkCookie();
-                    if (cookie === '') {
-                        cookie = await refreshCookie();
-                        if (cookie === '') {
-                            this.config.Cookie = '';
-                            this.updateConfig(this.config);
-                            showMessage('微信读书鉴权失败，请重新登录');
-                        }
-                        console.log('Cookie check failed!');
-                    }
-                    console.log('Cookie check success!')
-                    this.updateConfig(updateCookie(cookie, this.config));
                     this.openSetting();
                 }
             });
@@ -83,7 +59,7 @@ export default class Weread extends Plugin {
                 isLeft: true
             })
         })
-
+        
         // 加载插件配置
         this.loadData(Weread.GLOBAL_CONFIG_NAME)
             .then(config => {
@@ -91,15 +67,6 @@ export default class Weread extends Plugin {
                 console.log(this.config)
             })
             .catch(error => console.log(error))
-
-        // 检测 Cookie 是否可用
-        let cookie = await refreshCookie();
-        if (cookie === '') {
-            showMessage('微信读书鉴权失败，请重新登录');
-            console.log('Cookie refresh failed!')
-        }
-        console.log('Cookie refresh success!')
-        this.updateConfig(updateCookie(cookie, this.config));
     }
 
     onunload() {
@@ -108,7 +75,10 @@ export default class Weread extends Plugin {
         console.log("onunload");
     }
 
-    openSetting(): void {
+    async openSetting() {
+        // 打开设置时 Cookie 可能过期，需要重新检查
+        await this.checkCookieConifg(this.config);
+
         let dialog = new Dialog({
             title: "WereadSetting",
             content: `<div id="WereadSetting"></div>`,
@@ -138,6 +108,25 @@ export default class Weread extends Plugin {
             this.config = config;
         }
         return this.saveData(Weread.GLOBAL_CONFIG_NAME, this.config);
+    }
+
+    public async checkCookieConifg(config: any) {
+        let cookie = await checkCookie();
+        if (cookie === '') {
+            cookie = await refreshCookie();
+            if (cookie === '') {
+                showMessage('微信读书鉴权失败，请重新登录');
+                config.Cookie = '';
+                this.updateConfig(config);
+                console.log('Cookie check failed!');
+                return;
+            }
+        }
+        console.log('Cookie check success!');
+        config.Cookie = cookie;
+        config.weread.userName = getCookieBykey(cookie, 'wr_name');
+        config.weread.userVid = getCookieBykey(cookie, 'wr_vid');
+        await this.updateConfig(config);
     }
 }
 

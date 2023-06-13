@@ -16,7 +16,7 @@ export async function refreshCookie() {
     
     // 刷新 Cookie 用的窗口默认隐藏，避免影响使用体验
     let window = new BrowserWindow({ show: false });
-    window.loadURL('https://weread.qq.com/');
+    await window.loadURL('https://weread.qq.com/');
     let cookie = await window.webContents.session.cookies.get({ url: 'https://weread.qq.com/' });
     cookie = parseCookies(cookie);
     let wr_vid = cookie.filter((item: { name: string; }) => item.name === 'wr_vid')[0];
@@ -70,11 +70,4 @@ export function getCookieBykey(cookies: string, key: string) {
         }
     }
     return '';
-}
-
-export function updateCookie(cookie: string, config: any) {
-    config.Cookie = cookie;
-    config.weread.userName = getCookieBykey(cookie, 'wr_name');
-    config.weread.userVid = getCookieBykey(cookie, 'wr_vid');
-    return config;
 }
