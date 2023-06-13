@@ -8,6 +8,8 @@ export const DEFAULT_CONFIG = {
     },
     weread: {
         filterHighlight: '',
+        userName: '', 
+        userVid: ''
     }, 
     Cookie: ''
 }

@@ -1,12 +1,10 @@
-import { showMessage, Plugin } from "siyuan";
+import { showMessage } from "siyuan";
 
-export default class WereadLogin extends Plugin {
+export default class WereadLogin {
     private BroserWindow: any;
     private Window: any;
 
-    constructor(options) {
-        super(options)
-
+    constructor() {
         const { BrowserWindow} = globalThis.require("@electron/remote");
         
         this.BroserWindow = BrowserWindow;
@@ -14,6 +12,10 @@ export default class WereadLogin extends Plugin {
             width:800, 
             height:600 
         });
+
+        this.Window.once('ready-to-show', () => {
+            this.Window.show()
+        })
     }
 
     openWereadTab() {

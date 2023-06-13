@@ -37,7 +37,9 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     // import Card from "./item/Card.svelte";
     
     import Weread from "..";
+    import WereadLogin from "../weread/login";
     import { Metadata } from "../weread/models";
+    import { checkCookie } from "../utils/cookie";
     import { getMetadatas, getHighlights, getReviews, parseTimeStamp } from "../utils/parseResponse";
     import { 
         parseMetadataTemplate, 
@@ -106,6 +108,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     let options_books: IOptions = [];
     let options_notebook: IOptions = [];
     let card = '';
+    let login = false;
     let highlights = [];
     let reviews = [];
     let metadata_list: Metadata[] = [];
@@ -149,6 +152,35 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
         return review_card_list;
     }
 
+    async function get_books() {
+        metadata_list = await getMetadatas();
+        for (const metadata of metadata_list) {
+            let id = metadata.bookId;
+            let name = metadata.title;
+            // 处理过长的书名
+            name = name.length > 30 ? name.substring(0, 30) + '...' : name;
+            options_books.push({ key: id, text: name})
+        }
+        return options_books;
+    }
+
+    async function get_notebook() {
+        let response = await lsNotebooks();
+
+        for (var i = 1; i < response.notebooks.length; i++) {
+            let id = response.notebooks[i].id;
+            let name = response.notebooks[i].name;
+            options_notebook.push({ key: id, text: name });
+        }
+
+        return options_notebook;
+    }
+
+    async function isLogin() {
+        let cookie = await checkCookie();
+        return cookie === '' ? false : true;
+    }
+
     function setCardStyle(value: string, title: any, text: any) {
         return `<div class="weread-card" style=" flex: auto; height: 120px; width: 100%; border-radius: 5px; background-color: var(--b3-menu-background); box-shadow: 1px var(--b3-theme-on-background); padding: 5px 0; margin: 5px 0;">
                     <input
@@ -170,32 +202,10 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     }
 
     onMount(async () => {
+        login = await isLogin();
         options_books = await get_books();
         options_notebook = await get_notebook();
 
-        async function get_books() {
-            metadata_list = await getMetadatas();
-            for (const metadata of metadata_list) {
-                let id = metadata.bookId;
-                let name = metadata.title;
-                // 处理过长的书名
-                name = name.length > 30 ? name.substring(0, 30) + '...' : name;
-                options_books.push({ key: id, text: name})
-            }
-            return options_books;
-        }
-
-        async function get_notebook() {
-            let response = await lsNotebooks();
-
-            for (var i = 1; i < response.notebooks.length; i++) {
-                let id = response.notebooks[i].id;
-                let name = response.notebooks[i].name;
-                options_notebook.push({ key: id, text: name });
-            }
-
-            return options_notebook;
-        }
 
         showMessage("Setting panel opened");
     });
@@ -216,23 +226,45 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     <!-- 常规设置面板 -->
     <Panel display={panels[0].key === panel_focus}>
         <!-- 登录、注销 -->
-        <Item
-            {block}
-            title="微信读书未登录"
-            text="用户名："
-        >
-            <Input
-                slot="input"
+        {#if login}
+            <Item
                 {block}
-                {normal}
-                type={ItemType.button}
-                settingKey="login"
-                settingValue="登录"
-                on:clicked={() => {
-                    showMessage("正在打开登录界面");
-                }}
-            />
-        </Item>
+                title="微信读书已登录"
+                text="用户名：{config.weread.userName}"
+            >
+                <Input
+                    slot="input"
+                    {block}
+                    {normal}
+                    type={ItemType.button}
+                    settingKey="login"
+                    settingValue="退出登录"
+                    on:clicked={() => {
+                        const login = new WereadLogin();
+                        login.openWereadTab();
+                    }}
+                />
+            </Item>
+        {:else}
+            <Item
+                {block}
+                title="微信读书未登录"
+                text="用户名："
+            >
+                <Input
+                    slot="input"
+                    {block}
+                    {normal}
+                    type={ItemType.button}
+                    settingKey="login"
+                    settingValue="登录"
+                    on:clicked={() => {
+                        const login = new WereadLogin();
+                        login.openWereadTab();
+                    }}
+                />
+            </Item>
+        {/if}
 
         <!-- 笔记保存位置 -->
         <Item

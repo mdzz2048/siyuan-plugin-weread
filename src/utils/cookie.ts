@@ -12,7 +12,32 @@ export async function checkCookie() {
 }
 
 export async function refreshCookie() {
-    // todo: https://github.com/zhaohongxuan/obsidian-weread-plugin/blob/6764a114134d4e20e696d3ebef59f2989236a6b2/src/api.ts#L19
+    const { BrowserWindow} = globalThis.require("@electron/remote");
+    
+    // 刷新 Cookie 用的窗口默认隐藏，避免影响使用体验
+    let window = new BrowserWindow({ show: false });
+    window.loadURL('https://weread.qq.com/');
+    let cookie = await window.webContents.session.cookies.get({ url: 'https://weread.qq.com/' });
+    cookie = parseCookies(cookie);
+    let wr_vid = cookie.filter((item: { name: string; }) => item.name === 'wr_vid')[0];
+    let wr_skey = cookie.filter((item: { name: string; }) => item.name === 'wr_skey')[0];
+
+    if (wr_vid && wr_skey) {
+        // 检测 Cookie 可用性
+        let res = await fetch('https://i.weread.qq.com/user/notebooks', {
+            headers: {
+                'accessToken': wr_skey['value'], 
+                'vid': wr_vid['value']
+            }
+        });
+        if (res.ok) {
+            return getCookieString(cookie);
+        }
+    }
+
+    // 刷新失败显示窗口，重新登录
+    window.show();
+    return '';
 }
 
 
@@ -47,4 +72,11 @@ export function getCookieBykey(cookies: string, key: string) {
         }
     }
     return '';
+}
+
+export function updateCookie(cookie: string, config: any) {
+    config.Cookie = cookie;
+    config.weread.userName = getCookieBykey(cookie, 'wr_name');
+    config.weread.userVid = getCookieBykey(cookie, 'wr_vid');
+    return config;
 }
