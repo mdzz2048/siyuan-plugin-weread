@@ -10,7 +10,7 @@ const baseUrl:string = 'https://i.weread.qq.com';
 
 async function getUserInfo() {
     // todo: 换个靠谱的方法
-    let config = await getFile('data/storage/petal/siyuan-weread-sync/config');
+    let config = await getFile('data/storage/petal/siyuan-plugin-weread/config');
     let cookie = config.Cookie;
 
     const wr_skey = getCookieBykey(cookie, 'wr_skey');
