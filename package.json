@@ -1,12 +1,12 @@
 {
   "name": "siyuan-plugin-weread",
-  "version": "0.0.1",
+  "version": "1.0.2",
   "type": "module",
   "description": "",
   "repository": "",
   "homepage": "",
   "author": "mdzz2048",
-  "license": "GPL-3.0",
+  "license": "MIT",
   "scripts": {
     "make-link": "node  --no-warnings ./scripts/make_dev_link.js",
     "dev": "vite build --watch",

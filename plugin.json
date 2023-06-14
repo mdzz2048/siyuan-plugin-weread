@@ -1,13 +1,13 @@
 {
   "name": "siyuan-plugin-weread",
   "author": "mdzz2048",
-  "url": "https://github.com/mdzz2048/siyuan-weread-sync",
-  "version": "0.0.1",
+  "url": "https://github.com/mdzz2048/siyuan-plugin-weread",
+  "version": "1.0.2",
   "minAppVersion": "2.9.0",
   "backends": ["windows", "linux", "darwin"],
   "frontends": ["desktop"],
   "displayName": {
-    "en_US": "weread-sync",
+    "en_US": "siyuan-weread-plugin",
     "zh_CN": "微信读书插件"
   },
   "description": {
