@@ -74,12 +74,34 @@ export function parseMetadataTemplate(template: string, object: Metadata)  {
         '{{readUpdateTime}}': object.readUpdateTime, 
         '{{title}}': object.title, 
     }
-
-    for (let key in dict) {
-        template = template.replace(key, dict[key]);
+    const description = {
+        '{{bookId}}': '书籍 ID: ', 
+        '{{author}}': '作者: ', 
+        '{{bookVersion}}': '书籍版本: ',  
+        '{{bookmarkCount}}': '标注数量: ', 
+        '{{category}}': '书籍类别: ', 
+        '{{cover}}': '', 
+        '{{format}}': '书籍格式: ', 
+        '{{intro}}': '简介: ', 
+        '{{isbn}}': 'ISBN: ', 
+        '{{noteCount}}': '笔记数量: ', 
+        '{{publishTime}}': '出版时间: ', 
+        '{{publisher}}': '出版社: ', 
+        '{{reviewCount}}': '想法数量: ', 
+        '{{readUpdateTime}}': '最后阅读时间: ', 
+        '{{title}}': '', 
     }
 
-    return template.length > 0 ? template  + '---' : template;
+    for (let key in dict) {
+        if (key === '{{cover}}') {
+            template = template.replace(key, `<center><img src="${dict[key]}" width="180"></center>`);
+        } else {
+            template = template.replace(key, `<center>${description[key]}${dict[key]}</center>`);
+        }
+    }
+    template = `<div>${template}</div>`
+
+    return template;
 }
 
 export function parseHighlightTemplate(template: string, object: Highlight)  {
