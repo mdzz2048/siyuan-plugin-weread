@@ -29,7 +29,7 @@ export default class Weread extends Plugin {
 
                 if (this.config.siyuan.notebook !== '') {
                     // 同步所有笔记
-                    // await syncNotebooks(this.config);
+                    await syncNotebooks(this.config);
                 } else {
                     showMessage('请先设置导入笔记本')
                 }
@@ -52,6 +52,34 @@ export default class Weread extends Plugin {
                     this.openSetting();
                 }
             });
+            // menu.addItem({
+            //     icon: 'iconDownload', 
+            //     label: '导入预览', 
+            //     click: async () => {
+            //         const tab = this.addTab({
+            //             type: 'weread-tag', 
+            //             init() {
+            //                 this.element.innerHTML = '<div id="CardView">test</div>'
+            //                 new Settings({
+            //                     target: this.element.querySelector('#CardView'), 
+            //                     props: {
+            //                         config: this.config,
+            //                         plugin: this,
+            //                     }
+            //                 })
+            //             }
+            //         })
+
+            //         openTab({
+            //             custom: {
+            //                 title: '导入预览', 
+            //                 icon: 'iconDownload', 
+            //                 fn: tab
+            //             }, 
+            //             position: 'right'
+            //         })
+            //     }
+            // })
 
             menu.open({
                 x: rect.right,
@@ -97,6 +125,10 @@ export default class Weread extends Plugin {
                 plugin: this,
             }
         });
+    }
+
+    async cardView() {
+        await this.checkCookieConifg(this.config);
     }
 
     public async resetConfig(): Promise<void> {
