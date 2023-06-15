@@ -25,6 +25,7 @@ export default class Weread extends Plugin {
             position: "left",
             callback: async () => {
                 // 点击图标时 Cookie 可能过期，需要重新检查
+                showMessage('正在检查 Cookie 可用性，请稍等……');
                 await this.checkCookieConifg(this.config);
 
                 if (this.config.siyuan.notebook !== '') {
@@ -105,6 +106,7 @@ export default class Weread extends Plugin {
 
     async openSetting() {
         // 打开设置时 Cookie 可能过期，需要重新检查
+        showMessage('正在检查 Cookie 可用性，请稍等……');
         await this.checkCookieConifg(this.config);
 
         let dialog = new Dialog({
