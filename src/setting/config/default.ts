@@ -1,13 +1,13 @@
 export const DEFAULT_CONFIG = {
     siyuan: {
         notebook: '', 
-        docName: '', 
+        docName: '1', 
         docTemplate: '', 
-        highlightTemplate: '', 
-        noteTemplate: ''
+        highlightTemplate: '{{markText}}', 
+        noteTemplate: '{{abstract}}\n{{content}}'
     },
     weread: {
-        filterHighlight: '',
+        filterHighlight: '3',
         userName: '', 
         userVid: ''
     }, 
