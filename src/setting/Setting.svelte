@@ -428,7 +428,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     settingValue="导入测试"
                     on:clicked={async () => {
                         let marks_and_reviews_id = [];
-                        let checkbox = document.getElementsByName('weread-card-name');
+                        let checkbox = document.getElementsByName('card-name');
                         for (let i = 0; i < checkbox.length; i++) {
                             if (checkbox[i]['checked']) {
                                 marks_and_reviews_id.push(checkbox[i]['value']);
@@ -448,6 +448,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                             }
                             root_id = await creatDoc(config.siyuan.notebook, docTemplate, docAttr, path);
                         }
+                        console.log(marks_and_reviews_id)
                         // 导入所有选择项
                         for (const id of marks_and_reviews_id ) {
                             if (highlights.some(item => item.bookmarkId === id)) {
