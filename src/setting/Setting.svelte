@@ -34,7 +34,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     import Item from "./item/Item.svelte";
     import Input from "./item/Input.svelte";
     import CardGroup from "./item/CardGroup.svelte";
-    // import Card from "./item/Card.svelte";
+    import Card from "./item/Card.svelte";
     
     import Weread from "..";
     import WereadLogin from "../weread/login";
@@ -107,7 +107,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
 
     let options_books: IOptions = [];
     let options_notebook: IOptions = [];
-    let card = '';
+    let cards = [];
     let login = false;
     let highlights = [];
     let reviews = [];
@@ -132,22 +132,30 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
         highlights = await getHighlights(book_id);
         let highlight_card_list = [];
         for (const highlight of highlights) {
-            let value = highlight.bookmarkId;
-            let title = '';
-            let text = highlight.markText;
-            highlight_card_list.push(setCardStyle(value, title, text));
+            let card = {
+                title: '', 
+                text: highlight.markText, 
+                info: parseTimeStamp(highlight.createTime), 
+                key: highlight.bookmarkId, 
+                value: highlight.bookmarkId
+            }
+            highlight_card_list.push(card)
         }
         return highlight_card_list;
     }
 
-    async function getReviewsCard(book_id: string) {
+    async function getReviewsCards(book_id: string) {
         reviews = await getReviews(book_id);
         let review_card_list = [];
         for (const review of reviews) {
-            let value = review.reviewId;
-            let title = review.content;
-            let text = review.abstract;
-            review_card_list.push(setCardStyle(value, title, text));
+            let card = {
+                title: review.content, 
+                text: review.abstract, 
+                info: parseTimeStamp(review.createTime), 
+                key: review.reviewId, 
+                value: review.reviewId
+            }
+            review_card_list.push(card)
         }
         return review_card_list;
     }
@@ -179,26 +187,6 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     async function isLogin() {
         let cookie = await checkCookie();
         return cookie === '' ? false : true;
-    }
-
-    function setCardStyle(value: string, title: any, text: any) {
-        return `<div class="weread-card" style=" flex: auto; height: 120px; width: 100%; border-radius: 5px; background-color: var(--b3-menu-background); box-shadow: 1px var(--b3-theme-on-background); padding: 5px 0; margin: 5px 0;">
-                    <input
-                        id="${value}"
-                        name="weread-card-name"
-                        type="checkbox"
-                        value=${value}
-                        style="box-sizing: border-box"
-                    />
-                    <label for="${value}">
-                        <div class="weread-card-title" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0px 0px 5px 0px; padding: 0px 0px 0px 6.5px;">
-                            <slot name="title">${title}</slot>
-                        </div>
-                        <div class="weread-card-text" style="background-color: #ebeaf075; border-left: 1.5px solid var(--b3-scroll-color); padding: 0px 5px; /* 隐藏多余文字 */ display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden;">
-                            <slot name="text">${text}</slot>
-                        </div>
-                    </label>
-                </div>`
     }
 
     onMount(async () => {
@@ -414,8 +402,17 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                 ]}
             />
         </Item>
-        <CardGroup title="">         
-            {@html card}                                                                                           
+        <CardGroup title="">
+            {#each cards as card}
+                <Card
+                    title={card.title}
+                    text={card.text}
+                    info={card.info}
+                    settingKey={card.key}
+                    settingValue={card.value}
+                >
+                </Card>
+            {/each}
         </CardGroup>
         <Group title="" style=""> 
             <MiniItem>
@@ -427,15 +424,15 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     on:clicked={async () => {
                         // 更新标注、想法数据
                         let highlight_card_list = await getHighlightCards(book_id);
-                        let review_card_list = await getReviewsCard(book_id);
+                        let review_card_list = await getReviewsCards(book_id);
 
                         let filter = config.weread.filterHighlight;
                         if (filter == 1) {
-                            card = review_card_list.join('');
+                            cards = review_card_list;
                         } else if (filter == 2) {
-                            card = highlight_card_list.join('');
+                            cards = highlight_card_list;
                         } else if (filter == 3) {
-                            card = highlight_card_list.join('') + review_card_list.join('');
+                            cards = highlight_card_list.concat(review_card_list);
                         }
                     }}
                 />

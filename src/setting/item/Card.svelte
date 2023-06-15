@@ -1,9 +1,9 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
     
-    //Optional
-    export let title: string = ""; // 笔记
-    export let text: string = ""; // 标注
+    export let title: string = "";  // 卡片标题
+    export let text: string = "";   // 卡片内容
+    export let info: string = "";   // 附加信息
 
     export let settingKey: string;
     export let settingValue: any;
@@ -15,67 +15,93 @@
     }
 </script>
 
-<!-- todo: 卡片复选框悬浮显示 -->
-<div class="weread-card">
-    <input
-        id={settingKey}
-        name="weread-card-name"
-        type="checkbox"
-        value={settingValue}
-        class="checkbox-input"
-        on:change={changed}
-    />
-    <label for={settingKey}>
-        <div class="weread-card-title">
+<div class="card">
+    <label class="content" for={settingKey}>
+        <div class="title">
             <slot name="title">{@html title}</slot>
         </div>
-        <div class="weread-card-text">
+        <div class="text">
             <slot name="text">{@html text}</slot>
         </div>
+        <div class="info">
+            <slot name="info">{@html info}</slot>
+        </div>
     </label>
+    <input
+        id={settingKey}
+        value={settingValue}
+        name="card-name"
+        type="checkbox"
+        class="checkbox"
+        on:change={changed}
+    />
 </div>
 
 <style lang="css">
-    .weread-card {
-        flex: auto;
-        height: 120px;
-        width: 100%;
-
+    .card {
+        height: 100%;
+        box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
         border-radius: 5px;
-        background-color: var(--b3-menu-background);
-        box-shadow: 1px var(--b3-theme-on-background);
-        padding: 5px 0;
-        margin: 5px 0;
-    }
-
-    .weread-card-title {
         overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        margin: 0px 0px 5px 0px;
-        padding: 0px 0px 0px 6.5px;
+        
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        margin: 5px;
+
+        position: relative;
+    }
+    .card .content {
+        width: 100%;
+        height: 100%;
+        padding: 15px;
+
+        box-sizing: border-box;
     }
 
-    .weread-card-text {        
-        background-color: #ebeaf075;
-        border-left: 1.5px solid var(--b3-scroll-color);
-        padding: 0px 5px;
-        /* 隐藏多余文字 */
+    .card .content .title {
+        margin: 0px;
+
+        box-sizing: border-box;
+
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+
+        font-size: 1.3em;
+        font-weight: bold;
+    }
+
+    .card .content .text {
+        margin: 8px 0px;
+
         display: -webkit-box;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 4;
         overflow: hidden;
     }
 
-    .checkbox-input {
-        opacity: 0;
-        z-index: 1;
+    .card .content .info {
+        font-size: 0.8em;
+
         position: absolute;
-        right: 0;
-        top: 0;
+        bottom: 8px;
     }
-    
-    .checkbox-input:hover {
+
+    .card .checkbox {
+        position: absolute;
+        right: 5px;
+        top: 5px;
+
+        opacity: 0;
+    }
+    .card .checkbox:hover {
         opacity: 1;
+    }
+
+    .card:has( .checkbox:checked) {
+        outline: 1.5px dashed rgb(60, 60, 220)
     }
 </style>
