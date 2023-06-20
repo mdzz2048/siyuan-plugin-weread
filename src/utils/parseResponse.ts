@@ -70,9 +70,9 @@ export const parseChapterHighlights = (highlightData: any): ChapterHighlight[] =
     let chapterUids: number[] = jsonpath.query(highlightData, '$..chapterUid');
     chapterUids = [...new Set(chapterUids)];
     for (let chapterUid of chapterUids) {
-        const chapterHighlights = jsonpath.query(highlightData, `$..[?(@.chapterUid == ${chapterUid})]`);
+        const chapterHighlights = jsonpath.query(highlightData, `$.updated..[?(@.chapterUid == ${chapterUid})]`);
         const chapterHighlightCount = chapterHighlights.length;
-        const chapterTitle = chapterHighlights[0]['chapterTitle'];
+        const chapterTitle = jsonpath.query(highlightData, `$.chapters..[?(@.chapterUid == ${chapterUid})].title`)[0];
 
         const chapterHighlight: ChapterHighlight = {
             chapterUid: chapterUid, 
@@ -116,9 +116,9 @@ export const parseChapterReviews = (reviewsData: any): ChapterReview[] => {
     let chapterUids: number[] = jsonpath.query(reviewsData, '$..chapterUid');
     chapterUids = [...new Set(chapterUids)];
     for (let chapterUid of chapterUids) {
-        const chapterReviews = jsonpath.query(reviewsData, `$..[?(@.chapterUid == ${chapterUid})]`);
+        const chapterReviews = jsonpath.query(reviewsData, `$.updated..[?(@.chapterUid == ${chapterUid})]`);
         const chapterReviewCount = chapterReviews.length;
-        const chapterTitle = chapterReviews[0]['chapterTitle'];
+        const chapterTitle = jsonpath.query(reviewsData, `$.chapters..[?(@.chapterUid == ${chapterUid})].title`)[0];
 
         const chapterReview: ChapterReview = {
             chapterUid: chapterUid, 
