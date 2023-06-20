@@ -6,7 +6,8 @@ import deepmerge from "deepmerge";
 
 import { checkCookie, refreshCookie, getCookieBykey } from "./utils/cookie";
 import { syncNotebook, syncNotebooks } from "./weread/syncNotebooks";
-import { DEFAULT_CONFIG } from "./setting/config/default";
+import { DEFAULT_CONFIG } from "./config/default";
+import CardView from "./cardview/CardView.svelte";
 
 export default class Weread extends Plugin {
     static readonly GLOBAL_CONFIG_NAME = "config";
@@ -53,34 +54,36 @@ export default class Weread extends Plugin {
                     this.openSetting();
                 }
             });
-            // menu.addItem({
-            //     icon: 'iconDownload', 
-            //     label: '导入预览', 
-            //     click: async () => {
-            //         const tab = this.addTab({
-            //             type: 'weread-tag', 
-            //             init() {
-            //                 this.element.innerHTML = '<div id="CardView">test</div>'
-            //                 new Settings({
-            //                     target: this.element.querySelector('#CardView'), 
-            //                     props: {
-            //                         config: this.config,
-            //                         plugin: this,
-            //                     }
-            //                 })
-            //             }
-            //         })
+            menu.addItem({
+                icon: 'iconDownload', 
+                label: '导入预览', 
+                click: async () => {
+                    const config = this.config;
+                    const tab = this.addTab({
+                        type: 'weread-tag', 
+                        init() {
+                            this.element.innerHTML = '<div id="CardView"></div>';
+                            new CardView({
+                                target: this.element.querySelector('#CardView'),
+                                props: {
+                                    config: config, 
+                                    plugin: this, 
+                                }
+                            })
+                        }
+                    })
 
-            //         openTab({
-            //             custom: {
-            //                 title: '导入预览', 
-            //                 icon: 'iconDownload', 
-            //                 fn: tab
-            //             }, 
-            //             position: 'right'
-            //         })
-            //     }
-            // })
+                    openTab({
+                        custom: {
+                            title: '导入预览', 
+                            icon: 'iconDownload', 
+                            fn: tab
+                        }, 
+                        position: 'right', 
+                        keepCursor: true
+                    })
+                }
+            })
 
             menu.open({
                 x: rect.right,
