@@ -116,9 +116,9 @@ export const parseChapterReviews = (reviewsData: any): ChapterReview[] => {
     let chapterUids: number[] = jsonpath.query(reviewsData, '$..chapterUid');
     chapterUids = [...new Set(chapterUids)];
     for (let chapterUid of chapterUids) {
-        const chapterReviews = jsonpath.query(reviewsData, `$.updated..[?(@.chapterUid == ${chapterUid})]`);
+        const chapterReviews = jsonpath.query(reviewsData, `$..[?(@.chapterUid == ${chapterUid})]`);
         const chapterReviewCount = chapterReviews.length;
-        const chapterTitle = jsonpath.query(reviewsData, `$.chapters..[?(@.chapterUid == ${chapterUid})].title`)[0];
+        const chapterTitle = jsonpath.query(reviewsData, `$..[?(@.chapterUid == ${chapterUid})].chapterTitle`)[0];
 
         const chapterReview: ChapterReview = {
             chapterUid: chapterUid, 
