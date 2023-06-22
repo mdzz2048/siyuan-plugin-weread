@@ -75,7 +75,7 @@ export async function getRecentBooks() {
 }
 
 // 获取书籍详细信息，包括标题、作者、出版时间、出版社、ISBN 等
-export async function getBook(book_id: string) {
+export async function getBookInfos(book_id: string) {
     let url = `${baseUrl}/book/info?bookId=${book_id}`;
     let response = await requestUrl(url);
     return response;
