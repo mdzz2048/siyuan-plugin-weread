@@ -59,15 +59,16 @@ export default class Weread extends Plugin {
                 label: '导入预览', 
                 click: async () => {
                     const config = this.config;
+                    const plugin = this;
                     const tab = this.addTab({
                         type: 'weread-tag', 
                         init() {
-                            this.element.innerHTML = '<div id="CardView"></div>';
+                            this.element.innerHTML = '<div id="CardView" style="height: 100%"></div>';
                             new CardView({
                                 target: this.element.querySelector('#CardView'),
                                 props: {
                                     config: config, 
-                                    plugin: this, 
+                                    plugin: plugin, 
                                 }
                             })
                         }
@@ -130,10 +131,6 @@ export default class Weread extends Plugin {
                 plugin: this,
             }
         });
-    }
-
-    async cardView() {
-        await this.checkCookieConifg(this.config);
     }
 
     public async resetConfig(): Promise<void> {
