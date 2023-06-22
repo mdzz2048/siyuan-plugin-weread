@@ -62,3 +62,24 @@ export type ChapterReview = {
 	chapterReviewCount: number;
 	chapterReviews: Review[];
 };
+
+export type Note = {
+	id: string;				// 想法或标注 ID
+	text?: string;			// 标注内容
+	note?: string;			// 你的想法
+	bookId: string;			// 书籍 ID
+	bookVersion?: number;	// 书籍版本
+	chapterUid: number;		// 章节 ID
+	chapterTitle: string;	// 章节标题
+	createTime: number;		// 创建时间
+	atUserVids?: any;		// * 用户 ID，暂时用不到
+	type?: number;			// * 功能不明
+	range?: string;			// * 章节定位
+}
+
+export type ChapterNotes = {
+	chapterUid: number;
+	chapterTitle: string;
+	chapterNoteCount: number;
+	chapterNotes: Note[];
+};
