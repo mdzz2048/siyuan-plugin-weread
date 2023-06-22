@@ -10,14 +10,14 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     import { ItemType, type IOptions } from "./item/item";
     import { ITab } from "./tab";
     
-    import Panels from "./panel/Panels.svelte";
     import Panel from "./panel/Panel.svelte";
+    import Panels from "./panel/Panels.svelte";
     import Group from "./item/Group.svelte";
     import MiniItem from "./item/MiniItem.svelte";
     import Item from "./item/Item.svelte";
     import Input from "./item/Input.svelte";
-    import CardGroup from "./item/CardGroup.svelte";
     import Card from "./item/Card.svelte";
+    import CardGroup from "./item/CardGroup.svelte";
     
     import Weread from "..";
     import WereadLogin from "../weread/login";
