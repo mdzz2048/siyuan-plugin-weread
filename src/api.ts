@@ -166,11 +166,13 @@ export type ResdoOperations = {
     undoOperations: doOperation[] | null;
 }
 type DataType = "markdown" | "dom";
-export async function insertBlock(dataType: DataType, data: string, previousID: BlockId): Promise<ResdoOperations> {
+export async function insertBlock(dataType: DataType, data: string, previousID: BlockId, nextID: BlockId, parentID: BlockId | DocumentId): Promise<ResdoOperations> {
     let data1 = {
         dataType: dataType,
         data: data,
-        previousID: previousID
+        nextID: nextID,
+        previousID: previousID,
+        parentID: parentID
     }
     let url = '/api/block/insertBlock';
     return request(url, data1);
