@@ -72,6 +72,8 @@ export type Note = {
 	chapterUid: number;		// 章节 ID
 	chapterTitle: string;	// 章节标题
 	createTime: number;		// 创建时间
+	isHighlight?: boolean	// 是否为标注
+	style?: number;			// 样式 ID
 	atUserVids?: any;		// * 用户 ID，暂时用不到
 	type?: number;			// * 功能不明
 	range?: string;			// * 章节定位

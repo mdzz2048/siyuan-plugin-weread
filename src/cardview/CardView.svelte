@@ -9,12 +9,16 @@
     
     import Weread from "..";
     import { showMessage } from "siyuan";
+    import { syncNotes } from "../weread/syncNotebooks";
     import { 
         getMetadatas,
         getChapterHighlights, 
         getChapterReviews, 
         getChapterNotes, 
-        parseTimeStamp, 
+        parseTimeStamp,
+        getHighlights,
+        getReviews,
+        getMetadata, 
     } from "../utils/parseResponse";
 
     export let config: any;
@@ -34,8 +38,6 @@
     type checkboxType = 'checkall' | 'uncheckall' | 'reversecheck';
     function selectCheckboxByName(name: string, type: checkboxType){
         let elementList = document.getElementsByName(name);
-        console.log(elementList)
-        console.log(elementList.length)
         if(null != elementList){
             for(let i = 0; i < elementList.length; i++){  
                 if (elementList[i]['checked'] == true) {
@@ -331,10 +333,33 @@
                         { key: "3", text: "想法和标注" }
                     ]}
                 />
-                <button on:click={() => {
-                    showMessage('hello world');
-                    // todo: 打印所有选中卡片
-                    // console.log()
+                <button on:click={async () => {
+                    // 获取所有选中卡片
+                    let marks_and_reviews_id = [];
+                    let checkbox = document.getElementsByName('card-name');
+                    for (let i = 0; i < checkbox.length; i++) {
+                        if (checkbox[i]['checked']) {
+                            marks_and_reviews_id.push(checkbox[i]['value']);
+                        }
+                    }
+                    // 获取 Highlight 和 Review
+                    let highlights = await getHighlights(book_id);
+                    let highlights_checked = [];
+                    let reviews =  await getReviews(book_id);
+                    let reveiws_checked= [];
+                    for (const id of marks_and_reviews_id) {
+                        let highlight = highlights.filter(highlight => highlight.bookmarkId === id)[0];
+                        let review = reviews.filter(review => review.reviewId === id)[0];
+                        if (highlight) {
+                            highlights_checked.push(highlight);
+                        }
+                        if (review) {
+                            reveiws_checked.push(review);
+                        }
+                    }
+                    let metadata = await getMetadata(book_id);
+                    await syncNotes(book_id, metadata, highlights_checked, reveiws_checked, config);
+                    showMessage('导入完成！');
                 }}>导入</button>
             </div>
         </div>

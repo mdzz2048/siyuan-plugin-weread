@@ -172,6 +172,8 @@ export const parseChapterNote = (highlights, reviews, title: string, uid: number
             chapterUid: uid, 
             chapterTitle: title, 
             createTime: highlight['createTime'], 
+            isHighlight: true, 
+            style: highlight['style'], 
             type: highlight['type'], 
             range: highlight['range']
         }
@@ -187,6 +189,7 @@ export const parseChapterNote = (highlights, reviews, title: string, uid: number
             chapterUid: uid, 
             chapterTitle: title, 
             createTime: review['createTime'], 
+            isHighlight: false, 
             atUserVids: review['atUserVids'], 
             type: review['type'], 
             range: review['range']
@@ -276,8 +279,13 @@ export async function getReviews(book_id: string) {
     return parseReviews(response);
 }
 
+export async function getMetadata(book_id: string) {
+    let metadatas = await getMetadatas();
+    return metadatas.filter(metadata => metadata.bookId === book_id)[0];
+}
+
 export async function getMetadatas() {
-    let metadatas = [];
+    let metadatas:Metadata[] = [];
     let response = await getNotebooks();
     for (const metadata of response['books']) {
         metadatas.push(parseMetadata(metadata));
