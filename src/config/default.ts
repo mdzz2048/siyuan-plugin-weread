@@ -4,7 +4,8 @@ export const DEFAULT_CONFIG = {
         docName: '1', 
         docTemplate: '', 
         highlightTemplate: '{{markText}}', 
-        noteTemplate: '{{abstract}}\n{{content}}'
+        noteTemplate: '{{abstract}}\n{{content}}', 
+        importType: ''
     },
     weread: {
         filterHighlight: '3',

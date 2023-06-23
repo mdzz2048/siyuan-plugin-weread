@@ -58,6 +58,9 @@ export default class Weread extends Plugin {
                 icon: 'iconDownload', 
                 label: '导入预览', 
                 click: async () => {
+                    // 打开设置时 Cookie 可能过期，需要重新检查
+                    showMessage('正在检查 Cookie 可用性，请稍等……');
+                    await this.checkCookieConifg(this.config);
                     const config = this.config;
                     const plugin = this;
                     const tab = this.addTab({
