@@ -255,14 +255,16 @@
             {#each metadatas as metadata}
                 {#if metadata.key == book_id}
                     <!-- 书籍卡片样式 -->
-                    <BookCard
-                        type={ItemType.button}
-                        title={metadata.title}
-                        text={metadata.text}
-                        info={metadata.info}
-                        url={metadata.url}
-                    >
-                    </BookCard>
+                    <CardGroup>
+                        <BookCard
+                            type={ItemType.button}
+                            title={metadata.title}
+                            text={metadata.text}
+                            info={metadata.info}
+                            url={metadata.url}
+                        >
+                        </BookCard>
+                    </CardGroup>
                 {/if}
             {/each}
         </div>
@@ -401,11 +403,12 @@
         display: flex;
         height: 100%;
         position: relative;
+        overflow: hidden;
     }
 
     /* 侧边栏 */
     .aside {
-        max-width: 300px;
+        max-width: 250px;
         min-width: 200px;
         border-right: 1px solid rgb(190, 193, 197);
         /* flex 布局 */
@@ -452,6 +455,7 @@
         padding: 0 24px;
         width: 100%;
         height: 30px;
+        border-top: 1px solid rgb(190, 190, 190);
         border-bottom: 1px solid rgb(190, 190, 190);
         background-color: #f6f6f6;
         /* 固定在顶部 */
@@ -497,9 +501,31 @@
 
     /* 适配小尺寸屏幕 */
     @media (max-width: 1024px) {
-        /* todo: 侧栏移至顶部 */
         .aside {
-            display: none;
+            height: 150px;
+            max-width: 100%;
+            overflow: hidden;
+            /* flex 布局 */
+            flex-direction: row;
+            align-items: normal;
+            /* 固定在顶部 */
+            position: absolute;
+            top: 0;
+        }
+        .aside .select-book {
+            min-width: 180px;
+            max-width: 300px;
+        }
+        .aside .other-books {
+            border-top: none;
+            border-left: 1px solid rgb(190, 193, 197);
+            display: flex;
+            min-height: 100px;
+            max-height: 100%;
+        }
+
+        .main {
+            margin-top: 150px;
         }
     }
 </style>
