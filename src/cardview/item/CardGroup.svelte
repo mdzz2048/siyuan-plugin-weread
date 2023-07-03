@@ -10,6 +10,7 @@
 
 <style>
     .card-group {
+        width: 100%;
         overflow-y: auto;
         /* flex 布局 */
         display: flex;
