@@ -5,9 +5,11 @@ import type {
     Metadata, 
     ChapterHighlight, 
     ChapterReview, 
-    ChapterNotes
+    ChapterNotes,
+    BestHighlight,
+    ChapterBestHighlight
 } from "../weread/models";
-import { getNotebooks, getNotebookHighlights, getNotebookReviews, getBookInfos } from "../weread/api";
+import { getNotebooks, getNotebookHighlights, getNotebookReviews, getBookInfos, getNotebookBestHighlights } from "../weread/api";
 import jsonpath from 'jsonpath';
 
 
@@ -159,6 +161,72 @@ export const parseChapterReviews = (reviewsData: any): ChapterReview[] => {
     return chapterResult;    
 }
 
+// 解析 API：getNotebookBestHighlights 的返回值
+export const parseBestHighlights = (bestHighlightData: any): BestHighlight[] => {
+    const highlights = bestHighlightData['items'];
+    const chapters: [] = bestHighlightData['chapters'];
+    const chapterMap = new Map(
+        chapters.map(
+            (chapter) =>
+                [chapter['chapterUid'], chapter['title']] as [string, string]
+        )
+    );
+
+    return highlights.map((highlight) => {
+		const chapterUid = highlight['chapterUid'];
+        const highlightInfo: BestHighlight = {
+            bookId: highlight['bookId'],  
+            chapterUid: chapterUid, 
+            chapterTitle: chapterMap.get(chapterUid), 
+            bookmarkId: highlight['bookmarkId'], 
+            markText: highlight['markText'], 
+            totalCount: highlight['totalCount']
+        }
+        return highlightInfo;
+    })
+}
+
+export const parseChapterBestHighlights = (bestHighlightData: any): ChapterBestHighlight[] => {
+    const chapterResult: ChapterBestHighlight[] = [];
+    
+    let chapterUids: number[] = jsonpath.query(bestHighlightData['chapters'], '$..chapterUid');
+    chapterUids = [...new Set(chapterUids)];
+    for (let chapterUid of chapterUids) {
+        let chapterTitle = jsonpath.query(bestHighlightData, `$.chapters..[?(@.chapterUid == ${chapterUid})].title`)[0];
+        let chapterHighlights = jsonpath.query(bestHighlightData, `$.items..[?(@.chapterUid == ${chapterUid})]`);
+        let chapterHighlightCount = chapterHighlights.length;
+        // 根据 range 排序，匹配微信读书章节内顺序
+        chapterHighlights.sort((a, b) => {
+            let aa = Number(a.range.split('-')[0]);
+            let bb = Number(b.range.split('-')[0]);
+            return aa - bb;
+        })
+        chapterHighlights = chapterHighlights.map((highlight) => {
+            const chapterUid = highlight['chapterUid'];
+            const highlightInfo: BestHighlight = {
+                bookId: highlight['bookId'],  
+                chapterUid: chapterUid, 
+                chapterTitle: chapterTitle, 
+                bookmarkId: highlight['bookmarkId'], 
+                markText: highlight['markText'], 
+                totalCount: highlight['totalCount']
+            }
+            return highlightInfo;
+        });
+
+        const chapterHighlight: ChapterBestHighlight = {
+            chapterUid: chapterUid, 
+            chapterTitle: chapterTitle, 
+            chapterHighlightCount: chapterHighlightCount, 
+            chapterHighlights: chapterHighlights
+        }
+
+        chapterResult.push(chapterHighlight);
+    }
+
+    return chapterResult;
+}
+
 // 解析 API: getNotebookHighlights、getNotebookReviews 的章节笔记
 export const parseChapterNote = (highlights, reviews, title: string, uid: number): Note[] => {
     const chapterNote: Note[] = [];
@@ -267,6 +335,11 @@ export async function getChapterNotes(book_id: string) {
     let highlights = await getNotebookHighlights(book_id);
     let reveiws = await getNotebookReviews(book_id);
     return parseChapterNotes(highlights, reveiws);
+}
+
+export async function getChapterBestHighlights(book_id: string) {
+    let response = await getNotebookBestHighlights(book_id);
+    return parseChapterBestHighlights(response);
 }
 
 export async function getHighlights(book_id: string) {

@@ -3,7 +3,8 @@ import { getFile } from "../api";
 import axios from "axios";
 
 
-const baseUrl:string = 'https://i.weread.qq.com';
+const mainUrl = 'https://weread.qq.com';
+const baseUrl = 'https://i.weread.qq.com';
 
 
 /* ------------------------工具函数------------------------ */
@@ -61,6 +62,7 @@ export async function getNotebooks() {
 // 获取书架信息
 export async function getBookSync() {
     let wr_vid = (await getUserInfo()).vid;
+    // let url = `${mainUrl}/web/shelf/sync`;
     let url = `${baseUrl}/shelf/sync?userVid=${wr_vid}&synckey=0&lectureSynckey=0​`;
     let response = await requestUrl(url);
     return response;
@@ -95,9 +97,42 @@ export async function getNotebookHighlights(book_id: string) {
     return response;
 }
 
+// 获取书籍热门标注（公众号、导入书籍没有热门标注）
+export async function getNotebookBestHighlights(book_id: string) {
+    let url = `${baseUrl}/book/bestbookmarks?bookId=${book_id}`;
+    let response = await requestUrl(url);
+    return response;
+}
+
 // 获取书籍想法
 export async function getNotebookReviews(book_id: string) {
     let url = `${baseUrl}/review/list?bookId=${book_id}&listType=11&mine=1&synckey=0`;
     let response = await requestUrl(url);
+    return response;
+}
+
+// 获取评论信息？没有返回有效数据
+export async function getNotebookComments(wr_vid: string) {
+    let url = `${baseUrl}/review/list?listType=6&userVid=${wr_vid}&rangeType=2&mine=1&listMode=1`;
+    let response = await requestUrl(url);
+    return response;
+}
+
+/**
+ * 获取阅读时长
+ * REF: https://github.com/Higurashi-kagome/wereader/blob/e7c85352332e94095dccc34da2dba21c7826e11f/src/background/modules/bg-wereader-api.ts#L116
+ * 本年月数据及去年年总结：https://i.weread.qq.com/readdetail 
+ * 指定月及该月之前指定数量的月数据：https://i.weread.qq.com/readdetail?baseTimestamp=1612108800&count=3&type=1
+ * type=1：获取月数据
+ * type=0：获取周数据
+ */
+export async function getReadDetail(type=1, count=3, monthTimestamp?: number) {
+    let url = `${baseUrl}/readdetail`;
+
+    if(monthTimestamp) url = `${url}&baseTimestamp=${monthTimestamp}`;
+    if(count) url = `${url}&count=${count}`;
+    if([0,1].indexOf(type)>-1) url = `${url}&type=${type}`;
+    let response = await requestUrl(url);
+    
     return response;
 }

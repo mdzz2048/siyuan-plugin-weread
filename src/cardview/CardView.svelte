@@ -18,7 +18,8 @@
         parseTimeStamp,
         getHighlights,
         getReviews,
-        getMetadata, 
+        getMetadata,
+        getChapterBestHighlights, 
     } from "../utils/parseResponse";
 
     export let config: any;
@@ -225,6 +226,39 @@
         return chapter_note_card_list;
     }
 
+    async function getChapterBestHighlightCards(book_id: string) {
+        let chapter_highlights = await getChapterBestHighlights(book_id);
+        let chapter_highlight_card_list = [];
+        for (const chapter of chapter_highlights) {
+            let highlights = [];
+            const chapterTitle = chapter.chapterTitle;
+            const chapterUid = chapter.chapterUid;
+            const chapterHighlights = chapter.chapterHighlights;
+            const chapterHighlightCount = chapter.chapterHighlightCount;
+
+            for (const highlight of chapterHighlights) {
+                let card = {
+                    title: '', 
+                    text: highlight.markText, 
+                    info: `热度：${highlight.totalCount}`, 
+                    key: highlight.bookmarkId, 
+                    value: highlight.bookmarkId
+                }
+                highlights.push(card);
+            }
+            highlights.reverse();   // 逆序列表，符合时间序列
+            let card = {
+                chapterTitle: chapterTitle, 
+                chapterUid: chapterUid, 
+                chapterCards: highlights, 
+                chapterCardsCount: chapterHighlightCount
+            }
+            chapter_highlight_card_list.push(card);
+        }
+        // chapter_highlight_card_list.reverse();  // 逆序列表，符合章节顺序
+        return chapter_highlight_card_list;
+    }
+
     async function getCardsByFilter(book_id: string) {
         let filter = config.weread.filterHighlight;
         if (filter == 1) {
@@ -233,6 +267,8 @@
             cards = await getChapterHighlightCards(book_id);
         } else if (filter == 3) {
             cards = await getChapterNoteCards(book_id);
+        } else if (filter == 4) {
+            cards = await getChapterBestHighlightCards(book_id);
         }
         return cards;
     }
@@ -332,7 +368,8 @@
                     options={[
                         { key: "1", text: "想法" },
                         { key: "2", text: "标注" },
-                        { key: "3", text: "想法和标注" }
+                        { key: "3", text: "想法和标注" }, 
+                        { key: "4", text: "热门标注"}
                     ]}
                 />
                 <button on:click={async () => {

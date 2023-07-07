@@ -42,6 +42,22 @@ export type ChapterHighlight = {
 	chapterHighlights: Highlight[];
 }
 
+export type BestHighlight = {
+	bookId: string;			// 书籍 ID
+	chapterUid: number;		// 章节 ID
+	chapterTitle: string;	// 章节标题
+	bookmarkId: string;		// 标记 ID
+	markText: string; 		// 标记文本
+	totalCount: number		// 标注人数
+}
+
+export type ChapterBestHighlight = {
+	chapterUid: number;
+	chapterTitle: string;
+	chapterHighlightCount: number;
+	chapterHighlights: BestHighlight[];
+}
+
 export type Review = {
 	reviewId: string;		// 想法 ID
 	abstract?: string;		// 标注内容
