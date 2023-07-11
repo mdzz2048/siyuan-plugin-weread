@@ -4,7 +4,7 @@ import "./index.scss";
 import Settings from "./setting/Setting.svelte";
 import deepmerge from "deepmerge";
 
-import { checkCookie, refreshCookie, getCookieBykey } from "./utils/cookie";
+import { checkCookie, getCookieBykey } from "./utils/cookie";
 import { syncNotebook, syncNotebooks } from "./weread/syncNotebooks";
 import { DEFAULT_CONFIG } from "./config/default";
 import CardView from "./cardview/CardView.svelte";
@@ -148,16 +148,13 @@ export default class Weread extends Plugin {
     }
 
     public async checkCookieConifg(config: any) {
-        let cookie = await checkCookie();
+        let cookie = await checkCookie(config.Cookie);
         if (cookie === '') {
-            cookie = await refreshCookie();
-            if (cookie === '') {
-                showMessage('微信读书鉴权失败，请重新登录');
-                config.Cookie = '';
-                this.updateConfig(config);
-                console.log('Cookie check failed!');
-                return;
-            }
+            showMessage('微信读书鉴权失败，请重新登录');
+            config.Cookie = '';
+            this.updateConfig(config);
+            console.log('Cookie check failed!');
+            return;
         }
         console.log('Cookie check success!');
         config.Cookie = cookie;

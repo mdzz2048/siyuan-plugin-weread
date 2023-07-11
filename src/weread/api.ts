@@ -1,6 +1,6 @@
 import { getCookieBykey } from "../utils/cookie";
 import { getFile } from "../api";
-import axios from "axios";
+import { IWebSocketData, fetchSyncPost } from "siyuan";
 
 
 const mainUrl = 'https://weread.qq.com';
@@ -17,7 +17,6 @@ async function getUserInfo() {
     const wr_skey = getCookieBykey(cookie, 'wr_skey');
     const wr_vid = getCookieBykey(cookie, 'wr_vid');
 
-    // 不会思源直接发送带 Cookie 的请求，先用这两个鉴权顶顶
     const headers = {
         'accessToken': wr_skey, 
         'vid': wr_vid
@@ -27,27 +26,18 @@ async function getUserInfo() {
 }
 
 async function requestUrl(url: string) {
-    let headers = getUserInfo()
-
-    // // 使用 fetch
-    // let response = await fetch(url, {
-    //     method: 'GET',
-    //     mode: 'cors',
-    //     // cache: 'no-cache', 
-    //     headers: headers, 
-    //     redirect: 'follow', 
-    //     credentials: 'include'
-    // });
-    // return response.json();
-
-    // 使用第三方库 axios
-    const axiosConfig = {
-        headers: await headers, 
-        withCredentials: true, 
-    };
-    let response = await axios.get(url, axiosConfig);
     // todo: 请求失败处理
-    return response.data;
+    let proxy_url = '/api/network/forwardProxy';
+    let data = {
+        "url": url,
+        "method": "GET",
+        "timeout": 5000,
+        "contentType": "application/json",
+        "headers": [ await getUserInfo() ],
+        "payload": {}
+    }
+    let response: IWebSocketData = await fetchSyncPost(proxy_url, data);
+    return JSON.parse(response.data['body']);
 }
 
 /* ------------------------ 微信读书 API ------------------------*/

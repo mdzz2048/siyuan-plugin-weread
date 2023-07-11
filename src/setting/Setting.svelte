@@ -15,12 +15,13 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     import MiniItem from "./item/MiniItem.svelte";
     import Item from "./item/Item.svelte";
     import Input from "./item/Input.svelte";
+    import InputCookie from "./InputCookie.svelte";
     
     import Weread from "..";
     import WereadLogin from "../weread/login";
-    import { Metadata } from "../weread/models";
     import { checkCookie } from "../utils/cookie";
-    import { getMetadatas } from "../utils/parseResponse";
+    import { isElectron } from "../utils/front-end";
+    import { Dialog, showMessage } from "siyuan";
 
     export let config: any;
     export let plugin: Weread;
@@ -69,15 +70,66 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
             <li>{{content}} - 笔记内容</li>
         </ul>`
 
-    let options_books: IOptions = [];
     let options_notebook: IOptions = [];
     let login = false;
-    let metadata_list: Metadata[] = [];
     
     function updated() {
         plugin.updateConfig(config);
     }
     
+    async function loginWeread() {
+        if (isElectron()) {
+            const login = new WereadLogin();
+            login.openWereadTab();
+            login.Window.on('close', async (event) => {
+                // 拦截默认关闭设置，保存配置
+                event.preventDefault();
+                let cookie = await login.getWereadCookie();
+                config.Cookie = cookie;
+                updated();
+                console.log('正在登录');
+            })
+        } else {
+            let dialog = new Dialog({
+                title: '微信读书登录', 
+                content: `<div id="WereadInputCookie"></div>`, 
+                width: "520px",
+                height: "auto", 
+                destroyCallback: (options) => {
+                    console.log("正在登录", options);
+                    //You must destroy the component when the dialog is closed
+                    pannel.$destroy();
+                }
+            });
+            let pannel = new InputCookie({
+                target: dialog.element.querySelector("#WereadInputCookie"),
+                props: {
+                    config: config,
+                    dialog: dialog
+                }
+            });
+        }
+    }
+
+    async function logoutWeread() {
+        if (isElectron()) {
+            const login = new WereadLogin();
+            login.openWereadTab();
+            login.Window.on('close', async (event) => {
+                // REF: https://www.electronjs.org/docs/latest/api/web-contents/#event-will-prevent-unload
+                // 拦截默认关闭设置，保存配置
+                event.preventDefault();
+                let cookie = await login.getWereadCookie();
+                config.Cookie = cookie;
+                updated();
+                console.log('正在关闭');
+            })
+        } else {
+            config.Cookie = '';
+            updated();
+        }
+    }
+
     // function resetOptions() {
     //     plugin.siyuan.confirm(
     //             i18n.settings.generalSettings.reset.title, // 标题
@@ -88,18 +140,6 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     //                 }, // 确认按钮回调
     //             );
     // }
-
-    async function get_books() {
-        metadata_list = await getMetadatas();
-        for (const metadata of metadata_list) {
-            let id = metadata.bookId;
-            let name = metadata.title;
-            // 处理过长的书名
-            name = name.length > 30 ? name.substring(0, 30) + '...' : name;
-            options_books.push({ key: id, text: name})
-        }
-        return options_books;
-    }
 
     async function get_notebook() {
         let response = await lsNotebooks();
@@ -114,17 +154,13 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     }
 
     async function isLogin() {
-        let cookie = await checkCookie();
+        let cookie = await checkCookie(config.Cookie);
         return cookie === '' ? false : true;
     }
 
     onMount(async () => {
         login = await isLogin();
         options_notebook = await get_notebook();
-        if (login) {
-            // 没有登录就不加载书单列表了
-            options_books = await get_books();
-        }
 
         console.log("Setting panel opened");
     });
@@ -158,19 +194,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     type={ItemType.button}
                     settingKey="login"
                     settingValue="退出登录"
-                    on:clicked={async () => {
-                        const login = new WereadLogin();
-                        login.openWereadTab();
-                        login.Window.on('close', async (event) => {
-                            // REF: https://www.electronjs.org/docs/latest/api/web-contents/#event-will-prevent-unload
-                            // 拦截默认关闭设置，保存配置
-                            event.preventDefault();
-                            let cookie = await login.getWereadCookie();
-                            config.Cookie = cookie;
-                            updated()
-                            console.log('正在关闭');
-                        })
-                    }}
+                    on:clicked={ async () => { await logoutWeread() }}
                 />
             </Item>
         {:else}
@@ -186,18 +210,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     type={ItemType.button}
                     settingKey="login"
                     settingValue="登录"
-                    on:clicked={async () => {
-                        const login = new WereadLogin();
-                        login.openWereadTab();
-                        login.Window.on('close', async (event) => {
-                            // 拦截默认关闭设置，保存配置
-                            event.preventDefault();
-                            let cookie = await login.getWereadCookie();
-                            config.Cookie = cookie;
-                            updated()
-                            console.log('正在登录');
-                        })
-                    }}
+                    on:clicked={ async () => { await loginWeread() }}
                 />
             </Item>
         {/if}

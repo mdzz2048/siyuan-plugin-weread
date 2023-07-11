@@ -1,43 +1,47 @@
+import { fetchSyncPost, IWebSocketData } from "siyuan";
+
 /* ------------------------ 检测 Cookie 是否可用 ------------------------ */
 
-export async function checkCookie() {
-    const { session } = globalThis.require("@electron/remote");
-
-    let web = session;
-    let cookie = await web.defaultSession.cookies.get({ url: 'https://weread.qq.com/' });
-    cookie = parseCookies(cookie);
-    let wr_vid = cookie.filter((item: { name: string; }) => item.name === 'wr_vid')[0];
-    let wr_skey = cookie.filter((item: { name: string; }) => item.name === 'wr_skey')[0];
-    return wr_vid && wr_skey ? getCookieString(cookie) : '';
-}
-
-export async function refreshCookie() {
-    const { BrowserWindow} = globalThis.require("@electron/remote");
-    
-    // 刷新 Cookie 用的窗口默认隐藏，避免影响使用体验
-    let window = new BrowserWindow({ show: false });
-    await window.loadURL('https://weread.qq.com/');
-    let cookie = await window.webContents.session.cookies.get({ url: 'https://weread.qq.com/' });
-    cookie = parseCookies(cookie);
-    let wr_vid = cookie.filter((item: { name: string; }) => item.name === 'wr_vid')[0];
-    let wr_skey = cookie.filter((item: { name: string; }) => item.name === 'wr_skey')[0];
-
-    if (wr_vid && wr_skey) {
-        // 检测 Cookie 可用性
-        let res = await fetch('https://i.weread.qq.com/user/notebooks', {
-            headers: {
-                'accessToken': wr_skey['value'], 
-                'vid': wr_vid['value']
-            }
-        });
-        if (res.ok) {
-            return getCookieString(cookie);
+export async function checkCookie(cookie: string) {
+    // 检测 Cookie 可用性
+    let url = '/api/network/forwardProxy';
+    let data = {
+        "url": "https://weread.qq.com",
+        "method": "GET",
+        "timeout": 5000,
+        "contentType": "application/json",
+        "headers": [
+          {
+              'Cookie': cookie
+          }
+        ],
+        "payload": {}
+    }
+    let response: IWebSocketData = await fetchSyncPost(url, data);
+    let set_cookie = response.data['headers']['Set-Cookie'];
+    let wr_skey = getCookieBykey(cookie, 'wr_skey');
+    if (!set_cookie && !wr_skey) {
+        return '';
+    }
+    if (!set_cookie && wr_skey) {
+        // 没有返回 Set-Cookie，且 Cookie 存在 wr_skey，则 Cookie 有效
+        return cookie;
+    }
+    for (let set_str of set_cookie) {
+        // 更新 Cookie
+        if (set_str.includes('wr_skey')) {
+            let wr_skey = set_str.split(';')[0];
+            let cookie_arr = cookie.split(';');
+            let new_cookie = cookie_arr.map((str) => { 
+                if(str.includes('wr_skey')) { 
+                    str = wr_skey
+                }
+                return str;
+            }).join('; ');
+            return new_cookie;
         }
     }
-    window.close();
-    return '';
 }
-
 
 /* ------------------------ Cookie 处理 ------------------------ */
 
