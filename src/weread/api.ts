@@ -111,6 +111,13 @@ export async function getNotebookReviews(book_id: string) {
     return response;
 }
 
+// 获取书籍章节评论（）
+export async function getNotebookBestReviews(book_id: string, chapter_uid: number | string) {
+    let url = `${baseUrl}/review/list?bookId=${book_id}&listType=8&chapterUid=${chapter_uid}&synckey=0&listMode=3`;
+    let response = await requestUrl(url);
+    return response;
+}
+
 // 获取评论信息？没有返回有效数据
 export async function getNotebookComments(wr_vid: string) {
     let url = `${baseUrl}/review/list?listType=6&userVid=${wr_vid}&rangeType=2&mine=1&listMode=1`;
