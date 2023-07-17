@@ -1,5 +1,5 @@
 import { showMessage } from "siyuan";
-import { getMetadatas, getHighlights, getReviews, parseTimeStamp, getChapterNotes } from "../utils/parseResponse";
+import { getMetadata, getMetadatas, getHighlights, getReviews, parseTimeStamp, getChapterNotes } from "../utils/parseResponse";
 import type { Highlight, Review, Metadata, Note } from "./models";
 import { 
     createDocWithMd, 
@@ -316,9 +316,11 @@ export async function syncNotebooks(config: any) {
     showMessage('正在导入全部标注和笔记，这需要一段时间，请耐心等候……');
 
     let metadatas = await getMetadatas();
-    for (const metadata of metadatas) {
+    for (let metadata of metadatas) {
         let book_id = metadata.bookId;
         let book_name = metadata.title;
+        // getNotebooks() 获取的信息补全，需要用 getBookInfos() 补全
+        metadata = await getMetadata(book_id);
         console.log(`正在导入：${book_name}`)
         await syncNotebook(book_id, metadata, config);
     }
