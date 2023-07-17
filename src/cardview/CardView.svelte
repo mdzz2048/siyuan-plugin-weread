@@ -9,7 +9,7 @@
     
     import Weread from "..";
     import { showMessage } from "siyuan";
-    import { syncNotes } from "../weread/syncNotebooks";
+    import { isAttrsExist, syncBestNotes, syncNotes } from "../weread/syncNotebooks";
     import { 
         getMetadatas,
         getChapterHighlights, 
@@ -19,7 +19,8 @@
         getHighlights,
         getReviews,
         getMetadata,
-        getChapterBestHighlights, 
+        getChapterBestHighlights,
+        getBestHighlights, 
     } from "../utils/parseResponse";
 
     export let config: any;
@@ -98,6 +99,24 @@
             cardgroup.style.height = null;
         } else {
             cardgroup.style.height = '0px';
+        }
+    }
+
+    async function checkImportedBestCard(book_id: string) {
+        // 选中所有以导入内容，防止误删
+        let root_id = await isAttrsExist('custom', book_id, 'custom-book-id-best-highlight');
+        // 不存在热门标注文档，不用进行后续查找操作
+        if (!root_id) {
+            return;
+        }
+        let best_highlights = await getBestHighlights(book_id);
+        for (let highlight of best_highlights) {
+            let block_id = await isAttrsExist('bookmark', highlight.bookmarkId);
+            // 已导入，则选中卡片
+            if (block_id) {
+                let checkbox = document.getElementById(highlight.bookmarkId);
+                checkbox['checked'] = true;
+            }
         }
     }
 
@@ -269,6 +288,7 @@
             cards = await getChapterNoteCards(book_id);
         } else if (filter == 4) {
             cards = await getChapterBestHighlightCards(book_id);
+            await checkImportedBestCard(book_id);
         }
         return cards;
     }
@@ -381,23 +401,37 @@
                             marks_and_reviews_id.push(checkbox[i]['value']);
                         }
                     }
-                    // 获取 Highlight 和 Review
+
+                    // 获取书籍信息
+                    let metadata = await getMetadata(book_id);
                     let highlights = await getHighlights(book_id);
                     let highlights_checked = [];
                     let reviews =  await getReviews(book_id);
-                    let reveiws_checked= [];
+                    let reveiws_checked = [];
+                    let bestHighlights = await getBestHighlights(book_id);
+                    let bestHighlights_checked = [];
+
                     for (const id of marks_and_reviews_id) {
                         let highlight = highlights.filter(highlight => highlight.bookmarkId === id)[0];
                         let review = reviews.filter(review => review.reviewId === id)[0];
+                        let bestHighlight = bestHighlights.filter(highlight => highlight.bookmarkId === id)[0];
                         if (highlight) {
                             highlights_checked.push(highlight);
                         }
                         if (review) {
                             reveiws_checked.push(review);
                         }
+                        if (bestHighlight) {
+                            bestHighlights_checked.push(bestHighlight);
+                        }
                     }
-                    let metadata = await getMetadata(book_id);
-                    await syncNotes(book_id, metadata, highlights_checked, reveiws_checked, config);
+
+                    // 导入文档
+                    if (bestHighlights) {
+                        await syncBestNotes(book_id, metadata, bestHighlights_checked, config);
+                    } else {
+                        await syncNotes(book_id, metadata, highlights_checked, reveiws_checked, config);
+                    }
                     showMessage('导入完成！');
                 }}>导入</button>
             </div>

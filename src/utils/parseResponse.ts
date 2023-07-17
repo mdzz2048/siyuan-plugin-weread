@@ -352,6 +352,11 @@ export async function getReviews(book_id: string) {
     return parseReviews(response);
 }
 
+export async function getBestHighlights(book_id: string) {
+    let response = await getNotebookBestHighlights(book_id);
+    return parseBestHighlights(response);
+}
+
 export async function getMetadata(book_id: string) {
     let metadatas = await getMetadatas();
     return metadatas.filter(metadata => metadata.bookId === book_id)[0];

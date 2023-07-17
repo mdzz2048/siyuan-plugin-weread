@@ -69,6 +69,13 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
             <li>{{abstract}} - 摘录内容</li>
             <li>{{content}} - 笔记内容</li>
         </ul>`
+    const best_highlight_str = `<p>热门标注模板</p>
+        <ul>
+            <li>{{chapterUid}} - 章节 ID</li>
+            <li>{{chapterTitle}} - 章节标题</li>
+            <li>{{markText}} - 划线文本</li>
+            <li>{{totalCount}} - 标记人数</li>
+        </ul>`
 
     let options_notebook: IOptions = [];
     let login = false;
@@ -343,6 +350,20 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     placeholder="Input something"
                     on:changed={event => {
                         config.siyuan.noteTemplate = event.detail.value;
+                        updated()
+                    }}
+                />
+            </MiniItem>
+            <MiniItem>
+                <span slot="title">{@html best_highlight_str}</span>
+                <Input
+                    slot="input"
+                    type={ItemType.textarea}
+                    settingKey="bestHighlightTemplate"
+                    settingValue={config.siyuan.bestHighlightTemplate}
+                    placeholder="Input something"
+                    on:changed={event => {
+                        config.siyuan.bestHighlightTemplate = event.detail.value;
                         updated()
                     }}
                 />

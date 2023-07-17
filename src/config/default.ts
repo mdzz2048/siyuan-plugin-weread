@@ -5,6 +5,7 @@ export const DEFAULT_CONFIG = {
         docTemplate: '', 
         highlightTemplate: '{{markText}}', 
         noteTemplate: '{{abstract}}\n{{content}}', 
+        bestHighlightTemplate: '{{markText}}', 
         importType: ''
     },
     weread: {

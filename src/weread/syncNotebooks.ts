@@ -1,6 +1,6 @@
 import { showMessage } from "siyuan";
-import { getMetadata, getMetadatas, getHighlights, getReviews, parseTimeStamp, getChapterNotes } from "../utils/parseResponse";
-import type { Highlight, Review, Metadata, Note } from "./models";
+import { getMetadata, getMetadatas, getHighlights, getReviews, parseTimeStamp, getChapterNotes, getChapterBestHighlights } from "../utils/parseResponse";
+import type { Highlight, Review, Metadata, Note, BestHighlight } from "./models";
 import { 
     createDocWithMd, 
     sql, 
@@ -13,12 +13,13 @@ import {
 /* ------------------------ 工具函数 ------------------------ */
 
 // 根据属性查找
-type DataType = "doc" | "bookmark" | "review";
-export async function isAttrsExist(type: DataType, weread_id: string) {
+type DataType = "doc" | "bookmark" | "review" | "custom";
+export async function isAttrsExist(type: DataType, weread_id: string, attr?: string) {
     const stmt = {
         'doc': `SELECT * FROM attributes WHERE name='custom-book-id' AND value='${weread_id}'`, 
         'bookmark': `SELECT * FROM attributes WHERE name='custom-bookmark-id' AND value='${weread_id}'`, 
-        'review': `SELECT * FROM attributes WHERE name='custom-review-id' AND value='${weread_id}'`
+        'review': `SELECT * FROM attributes WHERE name='custom-review-id' AND value='${weread_id}'`, 
+        'custom': `SELECT * FROM attributes WHERE name='${attr}' AND value='${weread_id}'`
     }
     let response = await sql(stmt[type]);
     let block_id = response.length >= 1 ? response[0]['block_id'] : '';
@@ -81,7 +82,7 @@ function Note2Review(note: Note) {
 
 /* ------------------------ 模板参数匹配 ------------------------*/
 
-export function parseMetadataTemplate(template: string, object: Metadata)  {
+export function parseMetadataTemplate(template: string, object: Metadata) {
     const dict = {
         '{{bookId}}': object.bookId, 
         '{{author}}': object.author, 
@@ -129,7 +130,7 @@ export function parseMetadataTemplate(template: string, object: Metadata)  {
     return template;
 }
 
-export async function parseHighlightTemplate(template: string, object: Highlight)  {
+export async function parseHighlightTemplate(template: string, object: Highlight) {
     const create_time = parseTimeStamp(object.createTime);
     const bookmark_id = object.bookmarkId;
     const dict = {
@@ -171,7 +172,44 @@ export async function parseHighlightTemplate(template: string, object: Highlight
     return `${highlight_parsed}\n${attr}`;
 }
 
-export async function parseReviewTemplate(template: string, object: Review)  {
+export async function parseBestHighlightTemplate(template: string, object: BestHighlight) {
+    const bookmark_id = object.bookmarkId;
+    const dict = {
+        '{{bookId}}': object.bookId, 
+        '{{chapterUid}}': object.chapterUid, 
+        '{{chapterTitle}}': object.chapterTitle, 
+        '{{bookmarkId}}': object.bookmarkId, 
+        '{{markText}}': object.markText, 
+        '{{totalCount}}': object.totalCount
+    }
+
+    for (let key in dict) {
+        if (key == '{{markText}}') {
+            let quote = dict[key]
+                .split('\n\n')
+                .map((quote) => '> ' + quote.trim())
+                .join('\n> \n');
+            template = template.replace(key, quote);
+        } else {
+            template = template.replace(key, dict[key]);
+        }
+    }
+
+    // 保留导入过的 ID
+    let attr = '';
+    let highlight_parsed = `{{{row\n${template}\n}}}`;
+    let block_id = await isAttrsExist('bookmark', object.bookmarkId);
+    if (block_id) {
+        attr = `{: id=\"${block_id}\" custom-bookmark-id=\"${bookmark_id}\"}`;
+    } else {
+        attr = `{: custom-bookmark-id=\"${bookmark_id}\"}`;
+    }
+
+    // 返回 Kramdown 格式
+    return `${highlight_parsed}\n${attr}`;
+}
+
+export async function parseReviewTemplate(template: string, object: Review) {
     const create_time = parseTimeStamp(object.createTime);
     const review_id = object.reviewId;
     const dict = {
@@ -242,14 +280,17 @@ async function getDoc1 (book_id: string, config: any, highlights?: Highlight[], 
             if (highlight) {
                 let highlight_parsed = await parseHighlightTemplate(config.siyuan.highlightTemplate, highlight);
                 notes_parsed.push(highlight_parsed);
-            } else if (review) {
+            }
+            if (review) {
                 let review_parsed = await parseReviewTemplate(config.siyuan.noteTemplate, review);
                 notes_parsed.push(review_parsed);
-            } else if (note.isHighlight && !reviews && !highlights) {
+            }
+            if (note.isHighlight && !reviews && !highlights) {
                 let highlight = Note2Highlight(note);
                 let highlight_parsed = await parseHighlightTemplate(config.siyuan.highlightTemplate, highlight);
                 notes_parsed.push(highlight_parsed);
-            } else if (!note.isHighlight && !reviews && !highlights) {
+            }
+            if (!note.isHighlight && !reviews && !highlights) {
                 let review = Note2Review(note);
                 let review_parsed = await parseReviewTemplate(config.siyuan.noteTemplate, review);
                 notes_parsed.push(review_parsed);
@@ -306,6 +347,52 @@ export async function syncNotes(book_id: string, metadata: Metadata, highlights:
     } else {
         // 文档粒度的覆盖更新
         await updateDoc(root_id, `${docTemplate}\n\n${docData}\n\n{: custom-book-id=\"${book_id}\"}`);
+    }
+}
+
+// 导入热门标注
+export async function syncBestNotes(book_id: string, metadata: Metadata, best_highlights: BestHighlight[], config: any) {
+    let root_id = await isAttrsExist('custom', book_id, 'custom-book-id-best-highlight');
+    let import_with_chapter = config.siyuan.importType;
+
+    // 获取待导入内容
+    let docData = '';
+    let docTemplate = parseMetadataTemplate(config.siyuan.docTemplate, metadata);
+    if (import_with_chapter == 1) {
+        // 含章节标题
+        let chapters = await getChapterBestHighlights(book_id);
+        let chapters_parsed = [];
+        for (const chapter of chapters) {
+            let title = chapter.chapterTitle;
+            let uid = chapter.chapterUid;
+            let highlights = chapter.chapterHighlights;
+            let highlights_parsed = [];
+            for (const highlight of highlights) {
+                let best_highlight_parsed = await parseBestHighlightTemplate(config.siyuan.bestHighlightTemplate, highlight);
+                highlights_parsed.push(best_highlight_parsed);
+            }
+            let chapter_parsed = `# ${title}\n\n{: custom-chapter-id=\"${uid}\"}\n\n${highlights_parsed.join('\n\n')}`;
+            chapters_parsed.push(chapter_parsed);
+        }
+        docData = chapters_parsed.join('\n\n');
+    } else {
+        // 无章节标题
+        docData = best_highlights
+            .map(async (highlight) => await parseBestHighlightTemplate(config.siyuan.bestHighlightTemplate, highlight))
+            .join('\n\n');
+    }
+
+    if (!root_id) {
+        // 需要新建微信读书文档（没有找到符合自定义属性的文档）
+        let path = '/热门标注/' + metadata.title;
+        let docAttr = {
+            'custom-book-id-best-highlight': book_id
+        }
+        root_id = await creatDoc(config.siyuan.notebook, docTemplate, docAttr, path);
+        await updateDoc(root_id, `${docTemplate}\n\n${docData}\n\n{: custom-book-id-best-highlight=\"${book_id}\"}`);
+    } else {
+        // 文档粒度的覆盖更新
+        await updateDoc(root_id, `${docTemplate}\n\n${docData}\n\n{: custom-book-id-best-highlight=\"${book_id}\"}`);
     }
 }
 
