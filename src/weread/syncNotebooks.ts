@@ -1,5 +1,5 @@
 import { showMessage } from "siyuan";
-import { getMetadata, getMetadatas, getHighlights, getReviews, parseTimeStamp, getChapterNotes, getChapterBestHighlights } from "../utils/parseResponse";
+import { getMetadatas, getHighlights, getReviews, parseTimeStamp, getChapterNotes, getChapterBestHighlights, getBookMetadata } from "../utils/parseResponse";
 import type { Highlight, Review, Metadata, Note, BestHighlight } from "./models";
 import { 
     createDocWithMd, 
@@ -435,7 +435,7 @@ export async function syncNotebooks(config: any) {
         let book_id = metadata.bookId;
         let book_name = metadata.title;
         // getNotebooks() 获取的信息补全，需要用 getBookInfos() 补全
-        metadata = await getMetadata(book_id);
+        metadata = await getBookMetadata(book_id);
         console.log(`正在导入：${book_name}`)
         await syncNotebook(book_id, metadata, config);
     }
