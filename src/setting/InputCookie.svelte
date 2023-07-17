@@ -7,7 +7,7 @@
 
     function updateCookieByInput() {
         let input = document.getElementById('input_cookie')['value'];
-        config.Cookie = input;
+        config.Cookie = decodeURI(input);
         dialog.destroy();
     }
 </script>

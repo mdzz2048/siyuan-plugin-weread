@@ -79,14 +79,16 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     
     async function loginWeread() {
         if (isElectron()) {
-            const login = new WereadLogin();
-            login.openWereadTab();
-            login.Window.on('close', async (event) => {
+            const weread = new WereadLogin();
+            weread.openWereadTab();
+            weread.Window.on('close', async (event) => {
                 // 拦截默认关闭设置，保存配置
                 event.preventDefault();
-                let cookie = await login.getWereadCookie();
+                let cookie = await weread.getWereadCookie();
                 config.Cookie = cookie;
                 updated();
+                // 更新登录状态
+                login = await isLogin();
                 console.log('正在登录');
             })
         } else {
@@ -95,8 +97,10 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                 content: `<div id="WereadInputCookie"></div>`, 
                 width: "520px",
                 height: "auto", 
-                destroyCallback: (options) => {
+                destroyCallback: async (options) => {
                     console.log("正在登录", options);
+                    // 更新登录状态
+                    login = await isLogin();
                     //You must destroy the component when the dialog is closed
                     pannel.$destroy();
                 }
@@ -128,6 +132,8 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
             config.Cookie = '';
             updated();
         }
+        // 更新登录状态
+        login = await isLogin();
     }
 
     // function resetOptions() {
