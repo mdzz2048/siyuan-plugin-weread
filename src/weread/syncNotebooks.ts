@@ -129,7 +129,7 @@ export function parseMetadataTemplate(template: string, object: Metadata)  {
     return template;
 }
 
-export function parseHighlightTemplate(template: string, object: Highlight)  {
+export async function parseHighlightTemplate(template: string, object: Highlight)  {
     const create_time = parseTimeStamp(object.createTime);
     const bookmark_id = object.bookmarkId;
     const dict = {
@@ -156,11 +156,22 @@ export function parseHighlightTemplate(template: string, object: Highlight)  {
             template = template.replace(key, dict[key]);
         }
     }
+
+    // 保留导入过的 ID
+    let attr = '';
+    let highlight_parsed = `{{{row\n${template}\n}}}`;
+    let block_id = await isAttrsExist('bookmark', object.bookmarkId);
+    if (block_id) {
+        attr = `{: id=\"${block_id}\" custom-bookmark-id=\"${bookmark_id}\" custom-created-time=\"${create_time}\"}`;
+    } else {
+        attr = `{: custom-bookmark-id=\"${bookmark_id}\" custom-created-time=\"${create_time}\"}`;
+    }
+
     // 返回 Kramdown 格式
-    return `{{{row\n${template}\n}}}\n{: custom-bookmark-id=\"${bookmark_id}\" custom-created-time=\"${create_time}\"}`
+    return `${highlight_parsed}\n${attr}`;
 }
 
-export function parseReviewTemplate(template: string, object: Review)  {
+export async function parseReviewTemplate(template: string, object: Review)  {
     const create_time = parseTimeStamp(object.createTime);
     const review_id = object.reviewId;
     const dict = {
@@ -194,64 +205,107 @@ export function parseReviewTemplate(template: string, object: Review)  {
             template = template.replace(key, dict[key]);
         }
     }
+
+    // 保留导入过的 ID
+    let attr = '';
+    let review_parsed = `{{{row\n${template}\n}}}`;
+    let block_id = await isAttrsExist('review', object.reviewId);
+    if (block_id) {
+        attr = `{: id=\"${block_id}\" custom-review-id=\"${review_id}\" custom-created-time=\"${create_time}\"}`;
+    } else {
+        attr = `{: custom-review-id=\"${review_id}\" custom-created-time=\"${create_time}\"}`;
+    }
+
     // 返回 Kramdown 格式
-    return `{{{row\n${template}\n}}}\n{: custom-review-id=\"${review_id}\" custom-created-time=\"${create_time}\"}`
+    return `${review_parsed}\n${attr}`;
 }
 
 
 /* ------------------------ 导入函数 ------------------------ */
+
+// 含章节标题
+async function getDoc1 (book_id: string, config: any, highlights?: Highlight[], reviews?: Review[]) {
+    let chapters = await getChapterNotes(book_id);
+    let chapters_parsed = [];
+    for (const chapter of chapters) {
+        let title = chapter.chapterTitle;
+        let uid = chapter.chapterUid;
+        let notes = chapter.chapterNotes;
+        let notes_parsed = [];
+        for (const note of notes) {
+            let highlight = highlights
+                ? highlights.filter(highlight => highlight.bookmarkId === note.id)[0]
+                : false;
+            let review = reviews
+                ? reviews.filter(review => review.reviewId === note.id)[0]
+                : false;
+            if (highlight) {
+                let highlight_parsed = await parseHighlightTemplate(config.siyuan.highlightTemplate, highlight);
+                notes_parsed.push(highlight_parsed);
+            } else if (review) {
+                let review_parsed = await parseReviewTemplate(config.siyuan.noteTemplate, review);
+                notes_parsed.push(review_parsed);
+            } else if (note.isHighlight && !reviews && !highlights) {
+                let highlight = Note2Highlight(note);
+                let highlight_parsed = await parseHighlightTemplate(config.siyuan.highlightTemplate, highlight);
+                notes_parsed.push(highlight_parsed);
+            } else if (!note.isHighlight && !reviews && !highlights) {
+                let review = Note2Review(note);
+                let review_parsed = await parseReviewTemplate(config.siyuan.noteTemplate, review);
+                notes_parsed.push(review_parsed);
+            }
+        }
+        let chapter_parsed = `# ${title}\n\n{: custom-chapter-id=\"${uid}\"}\n\n${notes_parsed.join('\n\n')}`;
+        chapters_parsed.push(chapter_parsed);
+    }
+    return chapters_parsed.join('\n\n');
+}
+
+// 无章节标题
+async function getDoc2 (config: any, highlights?: Highlight[], reviews?: Review[], book_id?: string) {
+    if (!highlights && !reviews && book_id) {
+        // 单本导入，补全 highlights 和 reviews 信息
+        highlights = await getHighlights(book_id);
+        reviews = await getReviews(book_id);
+    }
+    let highlight = highlights
+        .map(async (highlight) => await parseHighlightTemplate(config.siyuan.highlightTemplate, highlight))
+        .join('\n\n');
+    let review = reviews
+        .map(async (review) => await parseReviewTemplate(config.siyuan.noteTemplate, review))
+        .join('\n\n');
+
+    return highlight + "\n\n" + review;
+}
+
 
 // 部分导入
 export async function syncNotes(book_id: string, metadata: Metadata, highlights: Highlight[], reviews: Review[], config: any) {
     let root_id = await isAttrsExist('doc', book_id);
     let import_with_chapter = config.siyuan.importType;
 
+    // 获取待导入内容
+    let docData = '';
+    let docTemplate = parseMetadataTemplate(config.siyuan.docTemplate, metadata);
+    if (import_with_chapter == 1) {
+        // 含章节标题
+        docData = await getDoc1(book_id, config, highlights, reviews);
+    } else {
+        // 无章节标题
+        docData = await getDoc2(config, highlights, reviews);
+    }
+
     if (!root_id) {
         // 需要新建微信读书文档（没有找到符合自定义属性的文档）
-        let docTemplate = parseMetadataTemplate(config.siyuan.docTemplate, metadata)
         let path = '/' + metadata.title;
         let docAttr = {
             'custom-book-id': book_id
         }
         root_id = await creatDoc(config.siyuan.notebook, docTemplate, docAttr, path);
+        await updateDoc(root_id, `${docTemplate}\n\n${docData}\n\n{: custom-book-id=\"${book_id}\"}`);
     } else {
         // 文档粒度的覆盖更新
-        let doc = parseMetadataTemplate(config.siyuan.docTemplate, metadata);
-        if (import_with_chapter == 1) {
-            // 含章节标题
-            let chapters = await getChapterNotes(book_id);
-            let chapters_parsed = [];
-            for (const chapter of chapters) {
-                let title = chapter.chapterTitle;
-                let uid = chapter.chapterUid;
-                let notes = chapter.chapterNotes;
-                let notes_parsed = [];
-                for (const note of notes) {
-                    let highlight = highlights.filter(highlight => highlight.bookmarkId === note.id)[0];
-                    let review = reviews.filter(review => review.reviewId === note.id)[0];
-                    if (highlight) {
-                        let highlight_parsed = parseHighlightTemplate(config.siyuan.highlightTemplate, highlight);
-                        notes_parsed.push(highlight_parsed);
-                    } else if (review) {
-                        let review_parsed = parseReviewTemplate(config.siyuan.noteTemplate, review);
-                        notes_parsed.push(review_parsed);
-                    }
-                }
-                let chapter_parsed = `# ${title}\n\n{: custom-chapter-id=\"${uid}\"}\n\n${notes_parsed.join('\n\n')}`;
-                chapters_parsed.push(chapter_parsed);
-            }
-            doc = doc + '\n\n' + chapters_parsed.join('\n\n');
-        } else {
-            // 无章节标题
-            let highlight = highlights
-                .map((highlight) => parseHighlightTemplate(config.siyuan.highlightTemplate, highlight))
-                .join('\n\n');
-            let review = reviews
-                .map((review) => parseReviewTemplate(config.siyuan.noteTemplate, review))
-                .join('\n\n');
-            doc = doc + "\n\n" + highlight + "\n\n" + review;
-        }
-        await updateDoc(root_id, doc);
+        await updateDoc(root_id, `${docTemplate}\n\n${docData}\n\n{: custom-book-id=\"${book_id}\"}`);
     }
 }
 
@@ -260,54 +314,28 @@ export async function syncNotebook(book_id: string, metadata: Metadata, config: 
     let root_id = await isAttrsExist('doc', book_id);
     let import_with_chapter = config.siyuan.importType;
 
+    // 获取待导入内容
+    let docData = '';
+    let docTemplate = parseMetadataTemplate(config.siyuan.docTemplate, metadata);
+    if (import_with_chapter == 1) {
+        // 含章节标题
+        docData = await getDoc1(book_id, config);
+    } else {
+        // 无章节标题
+        docData = await getDoc2(config, [], [], book_id);
+    }
+
     if (!root_id) {
         // 需要新建微信读书文档（没有找到符合自定义属性的文档）
-        let docTemplate = parseMetadataTemplate(config.siyuan.docTemplate, metadata)
         let path = '/' + metadata.title;
         let docAttr = {
             'custom-book-id': book_id
         }
         root_id = await creatDoc(config.siyuan.notebook, docTemplate, docAttr, path);
+        await updateDoc(root_id, `${docTemplate}\n\n${docData}\n\n{: custom-book-id=\"${book_id}\"}`);
     } else {
         // 文档粒度的覆盖更新
-        let doc = parseMetadataTemplate(config.siyuan.docTemplate, metadata);
-        if (import_with_chapter == 1) {
-            // 含章节标题
-            let chapters = await getChapterNotes(book_id);
-            let chapters_parsed = [];
-            for (const chapter of chapters) {
-                let title = chapter.chapterTitle;
-                let uid = chapter.chapterUid;
-                let notes = chapter.chapterNotes;
-                let notes_parsed = [];
-                for (const note of notes) {
-                    if (note.isHighlight) {
-                        let highlight = Note2Highlight(note);
-                        let highlight_parsed = parseHighlightTemplate(config.siyuan.highlightTemplate, highlight);
-                        notes_parsed.push(highlight_parsed);
-                    } else {
-                        let review = Note2Review(note);
-                        let review_parsed = parseReviewTemplate(config.siyuan.noteTemplate, review);
-                        notes_parsed.push(review_parsed);
-                    }
-                }
-                let chapter_parsed = `# ${title}\n\n{: custom-chapter-id=\"${uid}\"}\n\n${notes_parsed.join('\n\n')}`;
-                chapters_parsed.push(chapter_parsed);
-            }
-            doc = doc + '\n\n' + chapters_parsed.join('\n\n') + `\n{: custom-book-id=\"${book_id}\"}`;
-        } else {
-            // 无章节标题
-            let highlights = await getHighlights(book_id);
-            let reviews = await getReviews(book_id);
-            let highlight = highlights
-                .map((highlight) => parseHighlightTemplate(config.siyuan.highlightTemplate, highlight))
-                .join('\n\n');
-            let review = reviews
-                .map((review) => parseReviewTemplate(config.siyuan.noteTemplate, review))
-                .join('\n\n');
-            doc = doc + "\n\n" + highlight + "\n\n" + review + `\n{: custom-book-id=\"${book_id}\"}`;
-        }
-        await updateDoc(root_id, doc);
+        await updateDoc(root_id, `${docTemplate}\n\n${docData}\n\n{: custom-book-id=\"${book_id}\"}`);
     }
 }
 
