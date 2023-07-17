@@ -287,8 +287,12 @@
         } else if (filter == 3) {
             cards = await getChapterNoteCards(book_id);
         } else if (filter == 4) {
-            cards = await getChapterBestHighlightCards(book_id);
-            await checkImportedBestCard(book_id);
+            if (book_id.startsWith('CB_') || book_id.startsWith('MP_')) {
+                showMessage('导入的书籍和公众号没有热门标注哦！');
+            } else {
+                cards = await getChapterBestHighlightCards(book_id);
+                await checkImportedBestCard(book_id);
+            }
         }
         return cards;
     }
