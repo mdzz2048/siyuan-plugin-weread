@@ -5,7 +5,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
 
-    import { lsNotebooks } from "../api";
+    import { createDocWithMd, lsNotebooks, moveDocs, sql } from "../api";
     import { ItemType, type IOptions } from "./item/item";
     import { ITab } from "./tab";
     
@@ -82,6 +82,39 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     
     function updated() {
         plugin.updateConfig(config);
+    }
+
+    async function updatePath(old_path: string, new_path: string) {
+        let to_notebook = config.siyuan.notebook;
+        let sql_res = await sql(`SELECT * FROM blocks WHERE box = "${to_notebook}" AND hpath LIKE "${old_path}/%" AND type = "d"`);
+        let from_paths = sql_res.map((data) => data['path']);
+        if (from_paths.length > 0) {
+            showMessage('正在迁移导入数据……');
+            // 迁移导入数据需要将 hpath 转为 path，作为 moveDocs 的参数
+            let block_id = await createDocWithMd(to_notebook, new_path, '');
+            let block_sql = await sql(`SELECT * FROM blocks WHERE id = "${block_id}"`);
+            
+            if (block_sql.length === 0) {
+                // 监听数据库索引提交事件: https://github.com/siyuan-note/siyuan/issues/8814)
+                let listener = async (event: CustomEvent<any>) => {
+                    if (event.detail.cmd === "databaseIndexCommit") {
+                        // 取消监听事件，避免重复移动操作
+                        plugin.eventBus.off("ws-main", listener);
+                        
+                        block_sql = await sql(`SELECT * FROM blocks WHERE id = "${block_id}"`);
+                        new_path = block_sql[0]['path'];
+                        await moveDocs(from_paths, to_notebook, new_path);
+                    }
+                }
+
+                plugin.eventBus.on("ws-main", listener);
+            } else {
+                new_path = block_sql[0]['path'];
+                await moveDocs(from_paths, to_notebook, new_path);
+            }
+        } else {
+            showMessage('未检测到导入数据！');
+        }
     }
     
     async function loginWeread() {
@@ -248,7 +281,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
         </Item>
 
         <!-- 笔记保存路径 -->
-        <!-- <Item
+        <Item
             {block}
             title="保存路径"
             text="以 / 开头，如：/微信读书"
@@ -258,12 +291,17 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                 type={ItemType.text}
                 settingKey="savePath"
                 settingValue={config.siyuan.savePath}
-                on:changed={ e => {
-                    config.siyuan.savePath = e.detail.value;
+                on:changed={ async e => {
+                    let old_path = config.siyuan.savePath;
+                    let new_path = e.detail.value;
+                    // 迁移数据
+                    await updatePath(old_path, new_path);
+                    // 配置
+                    config.siyuan.savePath = new_path;
                     updated()
                 }}
             />
-        </Item> -->
+        </Item>
 
         <!-- 保存模式 -->
         <Item

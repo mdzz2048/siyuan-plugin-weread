@@ -2,7 +2,8 @@ export const DEFAULT_CONFIG = {
     siyuan: {
         notebook: '', 
         docName: '1', 
-        docTemplate: '', 
+        docTemplate: '',
+        savePath: '/', 
         highlightTemplate: '{{markText}}', 
         noteTemplate: '{{abstract}}\n{{content}}', 
         bestHighlightTemplate: '{{markText}}', 

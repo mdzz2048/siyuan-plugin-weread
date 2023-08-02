@@ -338,7 +338,9 @@ export async function syncNotes(book_id: string, metadata: Metadata, highlights:
 
     if (!root_id) {
         // 需要新建微信读书文档（没有找到符合自定义属性的文档）
-        let path = '/' + metadata.title;
+        let path = config.siyuan.savePath 
+            ? config.siyuan.savePath + metadata.title
+            : '/' + metadata.title;
         let docAttr = {
             'custom-book-id': book_id
         }
@@ -384,7 +386,9 @@ export async function syncBestNotes(book_id: string, metadata: Metadata, best_hi
 
     if (!root_id) {
         // 需要新建微信读书文档（没有找到符合自定义属性的文档）
-        let path = '/热门标注/' + metadata.title;
+        let path = config.siyuan.savePath 
+            ? config.siyuan.savePath + '/热门标注/' + metadata.title
+            : '/热门标注/' + metadata.title;
         let docAttr = {
             'custom-book-id-best-highlight': book_id
         }
@@ -414,7 +418,9 @@ export async function syncNotebook(book_id: string, metadata: Metadata, config: 
 
     if (!root_id) {
         // 需要新建微信读书文档（没有找到符合自定义属性的文档）
-        let path = '/' + metadata.title;
+        let path = config.siyuan.savePath 
+            ? config.siyuan.savePath + metadata.title
+            : '/' + metadata.title;
         let docAttr = {
             'custom-book-id': book_id
         }
