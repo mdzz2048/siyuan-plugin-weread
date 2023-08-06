@@ -2,7 +2,7 @@
   "name": "siyuan-plugin-weread",
   "author": "mdzz2048",
   "url": "https://github.com/mdzz2048/siyuan-plugin-weread",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "minAppVersion": "2.9.8",
   "backends": ["windows", "linux", "darwin", "android", "docker"],
   "frontends": ["desktop", "browser-mobile", "browser-desktop"],
