@@ -66,7 +66,7 @@ function Note2Highlight(note: Note) {
 function Note2Review(note: Note) {
     const review: Review = {
         reviewId: note.id, 
-        abstract: note.note, 
+        abstract: note.text, 
         content: note.note, 
         bookId: note.bookId, 
         bookVersion: note.bookVersion, 
@@ -339,7 +339,7 @@ export async function syncNotes(book_id: string, metadata: Metadata, highlights:
     if (!root_id) {
         // 需要新建微信读书文档（没有找到符合自定义属性的文档）
         let path = config.siyuan.savePath 
-            ? config.siyuan.savePath + metadata.title
+            ? config.siyuan.savePath + '/' + metadata.title
             : '/' + metadata.title;
         let docAttr = {
             'custom-book-id': book_id
@@ -419,7 +419,7 @@ export async function syncNotebook(book_id: string, metadata: Metadata, config: 
     if (!root_id) {
         // 需要新建微信读书文档（没有找到符合自定义属性的文档）
         let path = config.siyuan.savePath 
-            ? config.siyuan.savePath + metadata.title
+            ? config.siyuan.savePath + '/' + metadata.title
             : '/' + metadata.title;
         let docAttr = {
             'custom-book-id': book_id
