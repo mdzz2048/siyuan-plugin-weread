@@ -20,6 +20,7 @@ export type Metadata = {
 	reviewCount?: number;	// 想法数量
 	bookmarkCount?: number;	// 标注数量?
 	noteCount?: number;		// 笔记数量?
+	totalWords?: number;	// 书籍总字数
 }
 
 export type Highlight = {

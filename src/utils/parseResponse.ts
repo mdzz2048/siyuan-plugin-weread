@@ -52,7 +52,8 @@ export const parseBookInfos = (bookInfo: any): Metadata => {
         readUpdateTime: bookInfo['updateTime'], 
         reviewCount: bookInfo['reviewCount'], 
         bookmarkCount: bookInfo['bookmarkCount'], 
-        noteCount: bookInfo['noteCount']
+        noteCount: bookInfo['noteCount'], 
+        totalWords: bookInfo['totalWords']
     }
 
     return metadata;

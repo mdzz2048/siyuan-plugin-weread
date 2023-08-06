@@ -51,6 +51,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
             <li>{{isbn}} - ISBN</li>
             <li>{{category}} - 书籍分类</li>
             <li>{{publisher}} - 出版社</li>
+            <li>{{totalWords}} - 书籍总字数</li>
         </ul>`
     const highlight_str = `<p>标注模板</p>
         <ul>

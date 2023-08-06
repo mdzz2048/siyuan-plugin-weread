@@ -99,6 +99,7 @@ export function parseMetadataTemplate(template: string, object: Metadata) {
         '{{reviewCount}}': object.reviewCount, 
         '{{readUpdateTime}}': object.readUpdateTime, 
         '{{title}}': object.title, 
+        '{{totalWords}}': object.totalWords
     }
     const description = {
         '{{bookId}}': '书籍 ID: ', 
@@ -116,6 +117,7 @@ export function parseMetadataTemplate(template: string, object: Metadata) {
         '{{reviewCount}}': '想法数量: ', 
         '{{readUpdateTime}}': '最后阅读时间: ', 
         '{{title}}': '', 
+        '{{totalWords}}': '总字数: '
     }
 
     for (let key in dict) {
@@ -440,7 +442,7 @@ export async function syncNotebooks(config: any) {
     for (let metadata of metadatas) {
         let book_id = metadata.bookId;
         let book_name = metadata.title;
-        // getNotebooks() 获取的信息补全，需要用 getBookInfos() 补全
+        // getNotebooks() 获取的信息不全，需要用 getBookInfos() 补全
         metadata = await getBookMetadata(book_id);
         console.log(`正在导入：${book_name}`)
         await syncNotebook(book_id, metadata, config);
