@@ -133,3 +133,13 @@ export async function getReadDetail(type=1, count=3, monthTimestamp?: number) {
     
     return response;
 }
+
+/**
+ * 获取每天阅读时长
+ * 
+ */
+export async function getReadData() {
+    let url = `${baseUrl}/readdata/summary?synckey=0`;
+    let response = await requestUrl(url);
+    return response;
+}
