@@ -1,5 +1,5 @@
 import { getCookieBykey } from "../utils/cookie";
-import { getFile } from "../api";
+import { getFile } from "./siyuan";
 import { IWebSocketData, fetchSyncPost } from "siyuan";
 
 

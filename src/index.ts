@@ -1,15 +1,16 @@
 import { Plugin, showMessage, Dialog, Menu, isMobile, openTab, adaptHotkey } from "siyuan";
 
 import "./index.scss";
-import Settings from "./setting/Setting.svelte";
+import Settings from "./pages/pannel-setting/Setting.svelte";
 import deepmerge from "deepmerge";
 
 import { checkCookie, getCookieBykey } from "./utils/cookie";
-import { syncNotebook, syncNotebooks } from "./weread/syncNotebooks";
-import { DEFAULT_CONFIG } from "./config/default";
-import CardView from "./cardview/CardView.svelte";
+import { syncNotebook, syncNotebooks } from "./syncNotebooks";
+import { DEFAULT_CONFIG } from "./utils/default-config";
+import CardView from "./pages/tab-import-preview/CardView.svelte";
 
 export default class Weread extends Plugin {
+    [x: string]: any;
     static readonly GLOBAL_CONFIG_NAME = "config";
     
     protected config: any;
@@ -103,6 +104,19 @@ export default class Weread extends Plugin {
                 console.log(this.config)
             })
             .catch(error => console.log(error))
+
+        // 绑定快捷键
+        // todo: 使用 i18n 设置提示内容
+        // REF: https://github.com/Zuoqiu-Yingyi/siyuan-plugin-webview/blob/b46223441108ff4040de91f2bc1aa6eb3e4397ed/src/index.ts#L133-L151
+        this.addCommand({
+            langKey: "key",
+            langText: '微信读书热力图',
+            hotkey: "",
+            customHotkey: "",
+            callback: () => {
+                console.log('加载热力图')
+            },
+        });
     }
 
     onunload() {

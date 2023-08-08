@@ -1,13 +1,13 @@
 import { showMessage } from "siyuan";
-import { getMetadatas, getHighlights, getReviews, parseTimeStamp, getChapterNotes, getChapterBestHighlights, getBookMetadata } from "../utils/parseResponse";
-import type { Highlight, Review, Metadata, Note, BestHighlight } from "./models";
+import { getMetadatas, getHighlights, getReviews, parseTimeStamp, getChapterNotes, getChapterBestHighlights, getBookMetadata } from "./utils/parseResponse";
+import type { Highlight, Review, Metadata, Note, BestHighlight } from "./types/models";
 import { 
     createDocWithMd, 
     sql, 
     getBlockAttrs, 
     setBlockAttrs, 
     updateBlock, 
-} from "../api";
+} from "./api/siyuan";
 
 
 /* ------------------------ 工具函数 ------------------------ */

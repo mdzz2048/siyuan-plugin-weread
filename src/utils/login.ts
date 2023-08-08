@@ -1,5 +1,5 @@
 import { showMessage } from "siyuan";
-import { parseCookies, getCookieString } from "../utils/cookie";
+import { parseCookies, getCookieString } from "./cookie";
 
 export default class WereadLogin {
     public BroserWindow: any;

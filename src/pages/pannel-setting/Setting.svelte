@@ -5,9 +5,9 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
 
-    import { createDocWithMd, lsNotebooks, moveDocs, sql } from "../api";
+    import { createDocWithMd, lsNotebooks, moveDocs, sql } from "../../api/siyuan";
     import { ItemType, type IOptions } from "./item/item";
-    import { ITab } from "./tab";
+    import { ITab } from "./tab/tab";
     
     import Panel from "./panel/Panel.svelte";
     import Panels from "./panel/Panels.svelte";
@@ -17,10 +17,10 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     import Input from "./item/Input.svelte";
     import InputCookie from "./InputCookie.svelte";
     
-    import Weread from "..";
-    import WereadLogin from "../weread/login";
-    import { checkCookie } from "../utils/cookie";
-    import { isElectron } from "../utils/front-end";
+    import Weread from "../..";
+    import WereadLogin from "../../utils/login";
+    import { checkCookie } from "../../utils/cookie";
+    import { isElectron } from "../../utils/front-end";
     import { Dialog, showMessage } from "siyuan";
 
     export let config: any;

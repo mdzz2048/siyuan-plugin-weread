@@ -4,12 +4,12 @@
     import BookCard from "./item/BookCard.svelte";
     import NoteCard from "./item/NoteCard.svelte";
     import CardGroup from "./item/CardGroup.svelte";
-    import Input from "../setting/item/Input.svelte";
-    import { ItemType } from "../setting/item/item";
+    import Input from "../pannel-setting/item/Input.svelte";
+    import { ItemType } from "../pannel-setting/item/item";
     
-    import Weread from "..";
+    import Weread from "../..";
     import { showMessage } from "siyuan";
-    import { isAttrsExist, syncBestNotes, syncNotes } from "../weread/syncNotebooks";
+    import { isAttrsExist, syncBestNotes, syncNotes } from "../../syncNotebooks";
     import { 
         getMetadatas,
         getChapterHighlights, 
@@ -21,7 +21,7 @@
         getMetadata,
         getChapterBestHighlights,
         getBestHighlights, 
-    } from "../utils/parseResponse";
+    } from "../../utils/parseResponse";
 
     export let config: any;
     export let plugin: Weread;
