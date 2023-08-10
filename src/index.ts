@@ -1,13 +1,11 @@
 import { Plugin, showMessage, Dialog, Menu, isMobile, openTab, adaptHotkey } from "siyuan";
 
-import "./index.scss";
-import Settings from "./pages/pannel-setting/Setting.svelte";
 import deepmerge from "deepmerge";
 
 import { checkCookie, getCookieBykey } from "./utils/cookie";
 import { syncNotebook, syncNotebooks } from "./syncNotebooks";
-import { DEFAULT_CONFIG } from "./utils/default-config";
-import CardView from "./pages/tab-import-preview/CardView.svelte";
+import { DEFAULT_CONFIG } from "./types/default-config";
+import { CardView, Settings } from "./components";
 
 export default class Weread extends Plugin {
     [x: string]: any;
