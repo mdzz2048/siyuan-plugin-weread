@@ -2,11 +2,11 @@
     import { onMount } from "svelte";
 
     export let url: string;
+    export let width = 70;
+    export let height = 70;
     
     let canvas: any;
     let ctx: any;
-    let width = 70;
-    let height = 70;
 
     // REF：https://juejin.cn/post/6957521363326205982
     function adaptImage(imgW, imgH, cvsX, cvsY, cvsW, cvsH) {

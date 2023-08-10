@@ -6,15 +6,15 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     import { onMount, onDestroy } from "svelte";
 
     import { createDocWithMd, lsNotebooks, moveDocs, sql } from "../../api/siyuan";
-    import { ItemType, type IOptions } from "./item/item";
-    import { ITab } from "./tab/tab";
+    import { ItemType, type IOptions } from "../siyuan/item/item";
+    import { ITab } from "../siyuan/tab/tab";
     
-    import Panel from "./panel/Panel.svelte";
-    import Panels from "./panel/Panels.svelte";
-    import Group from "./item/Group.svelte";
-    import MiniItem from "./item/MiniItem.svelte";
-    import Item from "./item/Item.svelte";
-    import Input from "./item/Input.svelte";
+    import Panel from "../siyuan/panel/Panel.svelte";
+    import Panels from "../siyuan/panel/Panels.svelte";
+    import Group from "../siyuan/item/Group.svelte";
+    import MiniItem from "../siyuan/item/MiniItem.svelte";
+    import Item from "../siyuan/item/Item.svelte";
+    import Input from "../siyuan/item/Input.svelte";
     import InputCookie from "./InputCookie.svelte";
     
     import Weread from "../..";

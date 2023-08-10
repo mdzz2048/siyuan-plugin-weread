@@ -1,11 +1,11 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
 
-    import BookCard from "./item/BookCard.svelte";
-    import NoteCard from "./item/NoteCard.svelte";
-    import CardGroup from "./item/CardGroup.svelte";
-    import Input from "../pannel-setting/item/Input.svelte";
-    import { ItemType } from "../pannel-setting/item/item";
+    import BookCard from "./BookCard.svelte";
+    import NoteCard from "./NoteCard.svelte";
+    import CardGroup from "../base/layout/CardGroup.svelte";
+    import Input from "../siyuan/item/Input.svelte";
+    import { ItemType } from "../siyuan/item/item";
     
     import Weread from "../..";
     import { showMessage } from "siyuan";

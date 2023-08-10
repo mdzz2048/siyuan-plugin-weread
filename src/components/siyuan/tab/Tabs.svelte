@@ -20,8 +20,8 @@
 <script lang="ts">
     import type { ComponentEvents } from "svelte";
     import Tab from "./Tab.svelte";
-    import Svg from "./../misc/Svg.svelte";
-    import { type ITab } from "./../tab";
+    import Svg from "../../misc/Svg.svelte";
+    import { type ITab } from "./tab";
 
     export let tabs: ITab[];
     export let focus: string | number;

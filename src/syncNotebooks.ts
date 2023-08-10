@@ -1,6 +1,6 @@
 import { showMessage } from "siyuan";
 import { getMetadatas, getHighlights, getReviews, parseTimeStamp, getChapterNotes, getChapterBestHighlights, getBookMetadata } from "./utils/parseResponse";
-import type { Highlight, Review, Metadata, Note, BestHighlight } from "./types/models";
+import type { Highlight, Review, Metadata, Note, BestHighlight } from "./types/weread";
 import { 
     createDocWithMd, 
     sql, 

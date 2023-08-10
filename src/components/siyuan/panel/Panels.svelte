@@ -19,7 +19,7 @@
 
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    import Svg from "../../../components/misc/Svg.svelte";
+    import Svg from "../../base/misc/Svg.svelte";
     import type { ITab, TabKey } from "../tab/tab";
 
     export let panels: ITab[]; // 面板标签列表
