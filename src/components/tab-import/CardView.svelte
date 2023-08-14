@@ -9,7 +9,7 @@
     
     import Weread from "../..";
     import { showMessage } from "siyuan";
-    import { WereadConfig } from "../../types/weread";
+    import { WereadConfig } from "../../types/config";
     import {
         checkImportedBestCard, 
         getCardsByFilter, 

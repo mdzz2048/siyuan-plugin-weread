@@ -18,12 +18,13 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     import InputCookie from "./InputCookie.svelte";
     
     import Weread from "../..";
+    import { WereadConfig } from "../../types/config";
     import WereadLogin from "../../utils/login";
     import { checkCookie } from "../../utils/cookie";
     import { isElectron } from "../../utils/front-end";
     import { Dialog, showMessage } from "siyuan";
 
-    export let config: any;
+    export let config: WereadConfig;
     export let plugin: Weread;
 
     let block = false;

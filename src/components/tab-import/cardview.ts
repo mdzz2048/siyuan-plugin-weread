@@ -1,7 +1,7 @@
 import Weread from "../..";
 import { showMessage } from "siyuan";
 import { isAttrsExist, syncBestNotes, syncNotes } from "../../syncNotebooks";
-import { WereadConfig } from "../../types/weread";
+import { WereadConfig } from "../../types/config";
 import { 
     getMetadatas,
     getChapterHighlights, 
