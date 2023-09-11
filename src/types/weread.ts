@@ -20,6 +20,7 @@ export type Metadata = {
 	reviewCount?: number;	// 想法数量
 	bookmarkCount?: number;	// 标注数量?
 	noteCount?: number;		// 笔记数量?
+	totalWords?: number;	// 书籍总字数
 }
 
 export type Highlight = {
@@ -40,6 +41,22 @@ export type ChapterHighlight = {
 	chapterTitle: string;
 	chapterHighlightCount: number;
 	chapterHighlights: Highlight[];
+}
+
+export type BestHighlight = {
+	bookId: string;			// 书籍 ID
+	chapterUid: number;		// 章节 ID
+	chapterTitle: string;	// 章节标题
+	bookmarkId: string;		// 标记 ID
+	markText: string; 		// 标记文本
+	totalCount: number		// 标注人数
+}
+
+export type ChapterBestHighlight = {
+	chapterUid: number;
+	chapterTitle: string;
+	chapterHighlightCount: number;
+	chapterHighlights: BestHighlight[];
 }
 
 export type Review = {

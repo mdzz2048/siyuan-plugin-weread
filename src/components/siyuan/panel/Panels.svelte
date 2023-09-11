@@ -19,8 +19,8 @@
 
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    import Svg from "./../misc/Svg.svelte";
-    import type { ITab, TabKey } from "./../tab";
+    import Svg from "../../base/misc/Svg.svelte";
+    import type { ITab, TabKey } from "../tab/tab";
 
     export let panels: ITab[]; // 面板标签列表
     export let focus: TabKey; // 当前选中的面板的 key

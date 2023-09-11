@@ -5,24 +5,26 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
 
-    import { lsNotebooks } from "../api";
-    import { ItemType, type IOptions } from "./item/item";
-    import { ITab } from "./tab";
+    import { createDocWithMd, lsNotebooks, moveDocs, sql } from "../../api/siyuan";
+    import { ItemType, type IOptions } from "../siyuan/item/item";
+    import { ITab } from "../siyuan/tab/tab";
     
-    import Panel from "./panel/Panel.svelte";
-    import Panels from "./panel/Panels.svelte";
-    import Group from "./item/Group.svelte";
-    import MiniItem from "./item/MiniItem.svelte";
-    import Item from "./item/Item.svelte";
-    import Input from "./item/Input.svelte";
+    import Panel from "../siyuan/panel/Panel.svelte";
+    import Panels from "../siyuan/panel/Panels.svelte";
+    import Group from "../siyuan/item/Group.svelte";
+    import MiniItem from "../siyuan/item/MiniItem.svelte";
+    import Item from "../siyuan/item/Item.svelte";
+    import Input from "../siyuan/item/Input.svelte";
+    import InputCookie from "./InputCookie.svelte";
     
-    import Weread from "..";
-    import WereadLogin from "../weread/login";
-    import { Metadata } from "../weread/models";
-    import { checkCookie } from "../utils/cookie";
-    import { getMetadatas } from "../utils/parseResponse";
+    import Weread from "../..";
+    import { WereadConfig } from "../../types/config";
+    import WereadLogin from "../../utils/login";
+    import { checkCookie } from "../../utils/cookie";
+    import { isElectron } from "../../utils/front-end";
+    import { Dialog, showMessage } from "siyuan";
 
-    export let config: any;
+    export let config: WereadConfig;
     export let plugin: Weread;
 
     let block = false;
@@ -50,6 +52,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
             <li>{{isbn}} - ISBN</li>
             <li>{{category}} - 书籍分类</li>
             <li>{{publisher}} - 出版社</li>
+            <li>{{totalWords}} - 书籍总字数</li>
         </ul>`
     const highlight_str = `<p>标注模板</p>
         <ul>
@@ -68,16 +71,113 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
             <li>{{abstract}} - 摘录内容</li>
             <li>{{content}} - 笔记内容</li>
         </ul>`
+    const best_highlight_str = `<p>热门标注模板</p>
+        <ul>
+            <li>{{chapterUid}} - 章节 ID</li>
+            <li>{{chapterTitle}} - 章节标题</li>
+            <li>{{markText}} - 划线文本</li>
+            <li>{{totalCount}} - 标记人数</li>
+        </ul>`
 
-    let options_books: IOptions = [];
     let options_notebook: IOptions = [];
     let login = false;
-    let metadata_list: Metadata[] = [];
     
     function updated() {
         plugin.updateConfig(config);
     }
+
+    async function updatePath(old_path: string, new_path: string) {
+        let to_notebook = config.siyuan.notebook;
+        let sql_res = await sql(`SELECT * FROM blocks WHERE box = "${to_notebook}" AND hpath LIKE "${old_path}/%" AND type = "d"`);
+        let from_paths = sql_res.map((data) => data['path']);
+        if (from_paths.length > 0) {
+            showMessage('正在迁移导入数据……');
+            // 迁移导入数据需要将 hpath 转为 path，作为 moveDocs 的参数
+            let block_id = await createDocWithMd(to_notebook, new_path, '');
+            let block_sql = await sql(`SELECT * FROM blocks WHERE id = "${block_id}"`);
+            
+            if (block_sql.length === 0) {
+                // 监听数据库索引提交事件: https://github.com/siyuan-note/siyuan/issues/8814)
+                let listener = async (event: CustomEvent<any>) => {
+                    if (event.detail.cmd === "databaseIndexCommit") {
+                        // 取消监听事件，避免重复移动操作
+                        plugin.eventBus.off("ws-main", listener);
+                        
+                        block_sql = await sql(`SELECT * FROM blocks WHERE id = "${block_id}"`);
+                        new_path = block_sql[0]['path'];
+                        await moveDocs(from_paths, to_notebook, new_path);
+                    }
+                }
+
+                plugin.eventBus.on("ws-main", listener);
+            } else {
+                new_path = block_sql[0]['path'];
+                await moveDocs(from_paths, to_notebook, new_path);
+            }
+        } else {
+            showMessage('未检测到导入数据！');
+        }
+    }
     
+    async function loginWeread() {
+        if (isElectron()) {
+            const weread = new WereadLogin();
+            weread.openWereadTab();
+            weread.Window.on('close', async (event) => {
+                // 拦截默认关闭设置，保存配置
+                event.preventDefault();
+                let cookie = await weread.getWereadCookie();
+                config.Cookie = cookie;
+                updated();
+                // 更新登录状态
+                login = await isLogin();
+                console.log('正在登录');
+            })
+        } else {
+            let dialog = new Dialog({
+                title: '微信读书登录', 
+                content: `<div id="WereadInputCookie"></div>`, 
+                width: "520px",
+                height: "auto", 
+                destroyCallback: async (options) => {
+                    console.log("正在登录", options);
+                    // 更新登录状态
+                    login = await isLogin();
+                    //You must destroy the component when the dialog is closed
+                    pannel.$destroy();
+                }
+            });
+            let pannel = new InputCookie({
+                target: dialog.element.querySelector("#WereadInputCookie"),
+                props: {
+                    config: config,
+                    dialog: dialog
+                }
+            });
+        }
+    }
+
+    async function logoutWeread() {
+        if (isElectron()) {
+            const login = new WereadLogin();
+            login.openWereadTab();
+            login.Window.on('close', async (event) => {
+                // REF: https://www.electronjs.org/docs/latest/api/web-contents/#event-will-prevent-unload
+                // 拦截默认关闭设置，保存配置
+                event.preventDefault();
+                let cookie = await login.getWereadCookie();
+                config.Cookie = cookie;
+                updated();
+                console.log('正在关闭');
+            })
+        } else {
+            config.Cookie = '';
+            updated();
+        }
+        // 更新登录状态
+        login = await isLogin();
+    }
+
     // function resetOptions() {
     //     plugin.siyuan.confirm(
     //             i18n.settings.generalSettings.reset.title, // 标题
@@ -88,18 +188,6 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     //                 }, // 确认按钮回调
     //             );
     // }
-
-    async function get_books() {
-        metadata_list = await getMetadatas();
-        for (const metadata of metadata_list) {
-            let id = metadata.bookId;
-            let name = metadata.title;
-            // 处理过长的书名
-            name = name.length > 30 ? name.substring(0, 30) + '...' : name;
-            options_books.push({ key: id, text: name})
-        }
-        return options_books;
-    }
 
     async function get_notebook() {
         let response = await lsNotebooks();
@@ -114,17 +202,13 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     }
 
     async function isLogin() {
-        let cookie = await checkCookie();
+        let cookie = await checkCookie(config.Cookie);
         return cookie === '' ? false : true;
     }
 
     onMount(async () => {
         login = await isLogin();
         options_notebook = await get_notebook();
-        if (login) {
-            // 没有登录就不加载书单列表了
-            options_books = await get_books();
-        }
 
         console.log("Setting panel opened");
     });
@@ -158,19 +242,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     type={ItemType.button}
                     settingKey="login"
                     settingValue="退出登录"
-                    on:clicked={async () => {
-                        const login = new WereadLogin();
-                        login.openWereadTab();
-                        login.Window.on('close', async (event) => {
-                            // REF: https://www.electronjs.org/docs/latest/api/web-contents/#event-will-prevent-unload
-                            // 拦截默认关闭设置，保存配置
-                            event.preventDefault();
-                            let cookie = await login.getWereadCookie();
-                            config.Cookie = cookie;
-                            updated()
-                            console.log('正在关闭');
-                        })
-                    }}
+                    on:clicked={ async () => { await logoutWeread() }}
                 />
             </Item>
         {:else}
@@ -186,18 +258,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     type={ItemType.button}
                     settingKey="login"
                     settingValue="登录"
-                    on:clicked={async () => {
-                        const login = new WereadLogin();
-                        login.openWereadTab();
-                        login.Window.on('close', async (event) => {
-                            // 拦截默认关闭设置，保存配置
-                            event.preventDefault();
-                            let cookie = await login.getWereadCookie();
-                            config.Cookie = cookie;
-                            updated()
-                            console.log('正在登录');
-                        })
-                    }}
+                    on:clicked={ async () => { await loginWeread() }}
                 />
             </Item>
         {/if}
@@ -222,7 +283,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
         </Item>
 
         <!-- 笔记保存路径 -->
-        <!-- <Item
+        <Item
             {block}
             title="保存路径"
             text="以 / 开头，如：/微信读书"
@@ -232,12 +293,17 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                 type={ItemType.text}
                 settingKey="savePath"
                 settingValue={config.siyuan.savePath}
-                on:changed={ e => {
-                    config.siyuan.savePath = e.detail.value;
+                on:changed={ async e => {
+                    let old_path = config.siyuan.savePath;
+                    let new_path = e.detail.value;
+                    // 迁移数据
+                    await updatePath(old_path, new_path);
+                    // 配置
+                    config.siyuan.savePath = new_path;
                     updated()
                 }}
             />
-        </Item> -->
+        </Item>
 
         <!-- 保存模式 -->
         <Item
@@ -324,6 +390,20 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                     placeholder="Input something"
                     on:changed={event => {
                         config.siyuan.noteTemplate = event.detail.value;
+                        updated()
+                    }}
+                />
+            </MiniItem>
+            <MiniItem>
+                <span slot="title">{@html best_highlight_str}</span>
+                <Input
+                    slot="input"
+                    type={ItemType.textarea}
+                    settingKey="bestHighlightTemplate"
+                    settingValue={config.siyuan.bestHighlightTemplate}
+                    placeholder="Input something"
+                    on:changed={event => {
+                        config.siyuan.bestHighlightTemplate = event.detail.value;
                         updated()
                     }}
                 />

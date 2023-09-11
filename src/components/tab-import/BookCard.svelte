@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    import Canvas from "./Canvas.svelte";
-    import { ItemType } from "../../setting/item/item";
+    import Canvas from "../base/misc/Canvas.svelte";
+    import { ItemType } from "../siyuan/item/item";
     
     export let title: string = "";  // 卡片标题
     export let text: string = "";   // 卡片内容

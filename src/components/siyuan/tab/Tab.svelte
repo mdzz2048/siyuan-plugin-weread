@@ -18,7 +18,7 @@
 <!-- 标签页页签 -->
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    import type { TabKey } from "./../tab";
+    import type { TabKey } from "./tab";
 
     export let key: TabKey; // 该页签的唯一标识
     export let name: string = ""; // 该页签的名称
