@@ -8,7 +8,7 @@ import type {
     ChapterNotes,
     BestHighlight,
     ChapterBestHighlight
-} from "../types/weread";
+} from "weread";
 import { getNotebooks, getNotebookHighlights, getNotebookReviews, getBookInfos, getNotebookBestHighlights } from "../api/weread";
 import jsonpath from 'jsonpath';
 
