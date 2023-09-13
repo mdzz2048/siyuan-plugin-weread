@@ -1,11 +1,11 @@
-import { Plugin, showMessage, Dialog, Menu, isMobile, openTab, adaptHotkey } from "siyuan";
+import { Plugin, showMessage, Dialog, Menu, openTab, adaptHotkey } from "siyuan";
 
 import deepmerge from "deepmerge";
 
 import { checkCookie, getCookieBykey } from "./utils/cookie";
 import { syncNotebook, syncNotebooks } from "./syncNotebooks";
-import { DEFAULT_CONFIG } from "./types/default-config";
 import { CardView, Settings } from "./components";
+import { DEFAULT_CONFIG } from "./config/default";
 
 export default class Weread extends Plugin {
     [x: string]: any;
@@ -63,7 +63,7 @@ export default class Weread extends Plugin {
                     const config = this.config;
                     const plugin = this;
                     const tab = this.addTab({
-                        type: 'weread-tag', 
+                        type: 'weread-import', 
                         init() {
                             this.element.innerHTML = '<div id="CardView" style="height: 100%"></div>';
                             new CardView({
@@ -77,10 +77,14 @@ export default class Weread extends Plugin {
                     })
 
                     openTab({
+                        app: this.app, 
                         custom: {
                             title: '导入预览', 
                             icon: 'iconDownload', 
-                            fn: tab
+                            id: this.name + "weread-import",
+                            data: {
+                                tab
+                            }
                         }, 
                         position: 'right', 
                         keepCursor: true
