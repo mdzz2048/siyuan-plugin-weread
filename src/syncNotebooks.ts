@@ -1,6 +1,6 @@
 import { showMessage } from "siyuan";
 import { getMetadatas, getHighlights, getReviews, parseTimeStamp, getChapterNotes, getChapterBestHighlights, getBookMetadata } from "./utils/parseResponse";
-import type { Highlight, Review, Metadata, Note, BestHighlight } from "./types/weread";
+import type { Highlight, Review, Metadata, Note, BestHighlight } from "weread";
 import { 
     createDocWithMd, 
     sql, 
@@ -142,7 +142,7 @@ export async function parseHighlightTemplate(template: string, object: Highlight
         '{{chapterTitle}}': object.chapterTitle, 
         '{{bookmarkId}}': object.bookmarkId, 
         '{{markText}}': object.markText, 
-        '{{createTime}}': object.createTime, 
+        '{{createTime}}': create_time, 
         '{{style}}': object.style, 
         '{{type}}': object.type, 
         '{{range}}': object.range, 
@@ -222,7 +222,7 @@ export async function parseReviewTemplate(template: string, object: Review) {
         '{{content}}': object.content, 
         '{{chapterUid}}': object.chapterUid, 
         '{{chapterTitle}}': object.chapterTitle, 
-        '{{createTime}}': object.createTime, 
+        '{{createTime}}': create_time, 
         '{{atUserVids}}': object.atUserVids, 
         '{{type}}': object.type, 
         '{{range}}': object.range, 
