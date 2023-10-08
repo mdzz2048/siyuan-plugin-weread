@@ -5,7 +5,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
 
-    import { createDocWithMd, lsNotebooks, moveDocs, sql } from "../../api/siyuan";
+    import { client } from "../../api/siyuan";
     import { ItemType, type IOptions } from "../siyuan/item/item";
     import { ITab } from "../siyuan/tab/tab";
     
@@ -88,13 +88,19 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
 
     async function updatePath(old_path: string, new_path: string) {
         let to_notebook = config.siyuan.notebook;
-        let sql_res = await sql(`SELECT * FROM blocks WHERE box = "${to_notebook}" AND hpath LIKE "${old_path}/%" AND type = "d"`);
+        let response = await client.sql({ stmt: `SELECT * FROM blocks WHERE box = "${to_notebook}" AND hpath LIKE "${old_path}/%" AND type = "d"`});
+        let sql_res = response.data;
         let from_paths = sql_res.map((data) => data['path']);
         if (from_paths.length > 0) {
             showMessage('正在迁移导入数据……');
             // 迁移导入数据需要将 hpath 转为 path，作为 moveDocs 的参数
-            let block_id = await createDocWithMd(to_notebook, new_path, '');
-            let block_sql = await sql(`SELECT * FROM blocks WHERE id = "${block_id}"`);
+            let block_id = await client.createDocWithMd({
+                notebook: to_notebook, 
+                path: new_path, 
+                markdown: ''
+            });
+            let response = await client.sql({ stmt: `SELECT * FROM blocks WHERE id = "${block_id}"` });
+            let block_sql = response.data;
             
             if (block_sql.length === 0) {
                 // 监听数据库索引提交事件: https://github.com/siyuan-note/siyuan/issues/8814)
@@ -103,16 +109,25 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
                         // 取消监听事件，避免重复移动操作
                         plugin.eventBus.off("ws-main", listener);
                         
-                        block_sql = await sql(`SELECT * FROM blocks WHERE id = "${block_id}"`);
+                        response = await client.sql({stmt: `SELECT * FROM blocks WHERE id = "${block_id}"`});
+                        block_sql = response.data;
                         new_path = block_sql[0]['path'];
-                        await moveDocs(from_paths, to_notebook, new_path);
+                        await client.moveDocs({
+                            fromPaths: from_paths, 
+                            toNotebook: to_notebook, 
+                            toPath: new_path
+                        });
                     }
                 }
 
                 plugin.eventBus.on("ws-main", listener);
             } else {
                 new_path = block_sql[0]['path'];
-                await moveDocs(from_paths, to_notebook, new_path);
+                await client.moveDocs({
+                    fromPaths: from_paths, 
+                    toNotebook: to_notebook, 
+                    toPath: new_path
+                });
             }
         } else {
             showMessage('未检测到导入数据！');
@@ -190,7 +205,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
     // }
 
     async function get_notebook() {
-        let response = await lsNotebooks();
+        let response = (await client.lsNotebooks()).data;
 
         for (var i = 0; i < response.notebooks.length; i++) {
             let id = response.notebooks[i].id;

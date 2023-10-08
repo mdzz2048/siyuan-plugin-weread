@@ -1,13 +1,7 @@
 import { showMessage } from "siyuan";
 import { getMetadatas, getHighlights, getReviews, parseTimeStamp, getChapterNotes, getChapterBestHighlights, getBookMetadata } from "./utils/parseResponse";
 import type { Highlight, Review, Metadata, Note, BestHighlight } from "weread";
-import { 
-    createDocWithMd, 
-    sql, 
-    getBlockAttrs, 
-    setBlockAttrs, 
-    updateBlock, 
-} from "./api/siyuan";
+import { client } from "./api/siyuan";
 
 
 /* ------------------------ 工具函数 ------------------------ */
@@ -21,30 +15,55 @@ export async function isAttrsExist(type: DataType, weread_id: string, attr?: str
         'review': `SELECT * FROM attributes WHERE name='custom-review-id' AND value='${weread_id}'`, 
         'custom': `SELECT * FROM attributes WHERE name='${attr}' AND value='${weread_id}'`
     }
-    let response = await sql(stmt[type]);
-    let block_id = response.length >= 1 ? response[0]['block_id'] : '';
+    let response = await client.sql({ stmt: stmt[type] });
+    let result = response.data;
+    let block_id = result.length >= 1 ? response[0]['block_id'] : '';
 
     return block_id;
 }
 
 // 初次创建
 export async function creatDoc(notebook: string, docTemplate :string, attrs: { [key: string]: string; }, path: string = '/') {
-    let block_id = await createDocWithMd(notebook, path, docTemplate);
-    await setBlockAttrs(block_id, attrs);
+    let response = await client.createDocWithMd({
+        notebook: notebook, 
+        path: path, 
+        markdown: docTemplate, 
+    })
+    let block_id = response.data; 
+    await client.setBlockAttrs({
+        id: block_id, 
+        attrs: attrs
+    });
     return block_id;
 }
 
 // 后续更新
 export async function updateDoc(block_id: string, data: string) {
-    let attr = await getBlockAttrs(block_id);
-    updateBlock('markdown', data, block_id);
-    setBlockAttrs(block_id, attr);
+    let response = await client.getBlockAttrs({ id: block_id });
+    let attr = response.data;
+    client.updateBlock({
+        dataType: "markdown", 
+        data: data, 
+        id: block_id, 
+    });
+    client.setBlockAttrs({
+        id: block_id, 
+        attrs: attr, 
+    });
 }
 
 export async function updateNote(block_id: string, data: string) {
-    let attr = await getBlockAttrs(block_id);
-    await updateBlock('markdown', data, block_id);
-    await setBlockAttrs(block_id, attr);
+    let response = await client.getBlockAttrs({ id: block_id });
+    let attr = response.data;
+    await client.updateBlock({
+        dataType: "markdown", 
+        data: data, 
+        id: block_id, 
+    });
+    await client.setBlockAttrs({
+        id: block_id, 
+        attrs: attr, 
+    });
 }
 
 function Note2Highlight(note: Note) {
