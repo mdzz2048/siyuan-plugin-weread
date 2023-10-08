@@ -1,26 +1,22 @@
-import { getCookieBykey } from "../utils/cookie";
-import { getFile } from "./siyuan";
 import { IWebSocketData, fetchSyncPost } from "siyuan";
 import { IUserInfo } from "weread"
+import { getPluginConfig } from "../utils/config";
+import { getCookieBykey } from "../utils/cookie";
 
 const baseUrl = 'https://i.weread.qq.com';
 
 /* ------------------------工具函数------------------------ */
 
 async function getUserInfo(): Promise<IUserInfo> {
-    // todo: 换个靠谱的方法
-    let config = await getFile('data/storage/petal/siyuan-plugin-weread/config');
-    let cookie = config.Cookie;
-
+    const config = getPluginConfig("siyuan-plugin-weread");
+    const cookie = config.Cookie;
     const wr_skey = getCookieBykey(cookie, 'wr_skey');
     const wr_vid = getCookieBykey(cookie, 'wr_vid');
-
     const headers: IUserInfo = {
         'token': wr_skey, 
         'vid': wr_vid, 
         'cookie': cookie, 
     };
-
     return headers;
 }
 
