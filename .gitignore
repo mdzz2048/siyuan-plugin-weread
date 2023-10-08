@@ -9,6 +9,7 @@ dev
 dist
 build
 scripts
+test
 test.*
 index-bak.js
 index-bak.ts
