@@ -20,8 +20,7 @@
     "glob": "^7.2.3",
     "minimist": "^1.2.8",
     "rollup-plugin-livereload": "^2.0.5",
-    "sass": "^1.62.1",
-    "siyuan": "0.8.3",
+    "siyuan": "0.8.4",
     "svelte": "^3.57.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4",
@@ -30,8 +29,10 @@
     "vite-plugin-zip-pack": "^1.0.5"
   },
   "dependencies": {
+    "@siyuan-community/siyuan-sdk": "0.3.2",
     "axios": "^1.4.0",
     "deepmerge": "^4.3.1",
-    "jsonpath": "^1.1.1"
+    "jsonpath": "^1.1.1",
+    "less": "4.2.0"
   }
 }
