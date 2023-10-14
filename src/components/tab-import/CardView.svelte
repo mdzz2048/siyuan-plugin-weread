@@ -10,6 +10,7 @@
     import Weread from "../..";
     import { showMessage } from "siyuan";
     import { WereadConfig } from "../../types/config";
+    import { ChapterNoteCard } from "../../types/card";
     import {
         checkImportedBestCard, 
         getCardsByFilter, 
@@ -25,7 +26,7 @@
     export let plugin: Weread;
 
     let book_id = config.weread.bookId;
-    let cards = [];
+    let cards: ChapterNoteCard[] = [];
     let metadatas = [];
     let select_all = true;
 

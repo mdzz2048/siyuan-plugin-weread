@@ -2,18 +2,16 @@ import Weread from "../..";
 import { showMessage } from "siyuan";
 import { isAttrsExist, syncBestNotes, syncNotes } from "../../syncNotebooks";
 import { WereadConfig } from "../../types/config";
+import { getNotebookBestHighlights } from "../../api/weread";
 import { 
-    getMetadatas,
-    getChapterHighlights, 
-    getChapterReviews, 
-    getChapterNotes, 
-    parseTimeStamp,
-    getHighlights,
-    getReviews,
-    getMetadata,
-    getChapterBestHighlights,
-    getBestHighlights, 
-} from "../../utils/parseResponse";
+    getMetadata, 
+    getCardMetadataList, 
+    getChapterBookmarkCardList, 
+    getChapterBestBookmarkCardList, 
+    getChapterReviewCardList, 
+    getChapterNoteCardList,
+} from "../../utils/parse";
+import { ChapterNoteCard } from "../../types/card";
 
 async function updateConfig(config: WereadConfig, plugin?: Weread) {
     await plugin.updateConfig(config);
@@ -95,9 +93,9 @@ async function checkImportedBestCard(book_id: string, config: WereadConfig) {
     if (!root_id || filter != '4') {
         return;
     }
-    let best_highlights = await getBestHighlights(book_id);
+    let best_highlights = await getNotebookBestHighlights(book_id);
     console.log(best_highlights)
-    for (let highlight of best_highlights) {
+    for (let highlight of best_highlights.items) {
         let block_id = await isAttrsExist('bookmark', highlight.bookmarkId);
         // 已导入，则选中卡片
         if (block_id) {
@@ -108,222 +106,52 @@ async function checkImportedBestCard(book_id: string, config: WereadConfig) {
 }
 
 /* ------------------------ 流程函数 ------------------------ */
-async function getMetadatasCards() {
-    let metadatas = await getMetadatas();
-    let metadata_card_list = [];
-    for (const metadata of metadatas) {
-        let note_count = metadata.noteCount + metadata.reviewCount + metadata.bookmarkCount;
-        let card = {
-            title: `${note_count} 个笔记`, 
-            text: metadata.title, 
-            info: metadata.readUpdateTime, 
-            url: metadata.cover, 
-            key: metadata.bookId, 
-            value: metadata.bookId
-        }
-        metadata_card_list.push(card);
-    }
-    // 根据阅读时间排序（倒序）
-    metadata_card_list.sort((a, b) => a.info - b. info);
-    metadata_card_list = metadata_card_list.map((metedata) => {
-        metedata.info = parseTimeStamp(metedata.info);
-        return metedata;
-    })
-    metadata_card_list.reverse();
-    return metadata_card_list;
-}
 
-async function getChapterHighlightCards(book_id: string) {
-    let chapter_highlights = await getChapterHighlights(book_id);
-    let chapter_highlight_card_list = [];
-    for (const chapter of chapter_highlights) {
-        let highlights = [];
-        const chapterTitle = chapter.chapterTitle;
-        const chapterUid = chapter.chapterUid;
-        const chapterHighlights = chapter.chapterHighlights;
-        const chapterHighlightCount = chapter.chapterHighlightCount;
-
-        for (const highlight of chapterHighlights) {
-            let card = {
-                title: '', 
-                text: highlight.markText, 
-                info: parseTimeStamp(highlight.createTime), 
-                key: highlight.bookmarkId, 
-                value: highlight.bookmarkId
-            }
-            highlights.push(card);
-        }
-        highlights.reverse();   // 逆序列表，符合时间序列
-        let card = {
-            chapterTitle: chapterTitle, 
-            chapterUid: chapterUid, 
-            chapterCards: highlights, 
-            chapterCardsCount: chapterHighlightCount
-        }
-        chapter_highlight_card_list.push(card);
-    }
-    chapter_highlight_card_list.reverse();  // 逆序列表，符合章节顺序
-    return chapter_highlight_card_list;
-}
-
-async function getChapterReviewsCards(book_id: string) {
-    let chapter_reviews = await getChapterReviews(book_id);
-    let chapter_review_card_list = [];
-    for (const chapter of chapter_reviews) {
-        let reviews = [];
-        const chapterTitle = chapter.chapterTitle;
-        const chapterUid = chapter.chapterUid;
-        const chapterReviews = chapter.chapterReviews;
-        const chapterReviewCount = chapter.chapterReviewCount;
-
-        for (const review of chapterReviews) {
-            let card = {
-                title: review.content, 
-                text: review.abstract, 
-                info: parseTimeStamp(review.createTime), 
-                key: review.reviewId, 
-                value: review.reviewId
-            }
-            reviews.push(card)
-        }
-        reviews.reverse();   // 逆序列表，符合时间序列
-        let card = {
-            chapterTitle: chapterTitle, 
-            chapterUid: chapterUid, 
-            chapterCards: reviews, 
-            chapterCardsCount: chapterReviewCount
-        }
-        chapter_review_card_list.push(card);
-    }
-    chapter_review_card_list.reverse();  // 逆序列表，符合章节顺序
-    return chapter_review_card_list;
-}
-
-async function getChapterNoteCards(book_id: string) {
-    let chapter_notes = await getChapterNotes(book_id);
-    let chapter_note_card_list = [];
-    for (const chapter of chapter_notes) {
-        let crads = [];
-        const chapterTitle = chapter.chapterTitle;
-        const chapterUid = chapter.chapterUid;
-        const chapterNotes = chapter.chapterNotes;
-        const chapterNoteCount = chapter.chapterNoteCount;
-
-        for (const note of chapterNotes) {
-            let card = {
-                title: note.note, 
-                text: note.text, 
-                info: parseTimeStamp(note.createTime), 
-                key: note.id, 
-                value: note.id
-            }
-            crads.push(card)
-        }
-        // crads.reverse();   // 逆序列表，符合时间序列
-        let card = {
-            chapterTitle: chapterTitle, 
-            chapterUid: chapterUid, 
-            chapterCards: crads, 
-            chapterCardsCount: chapterNoteCount
-        }
-        chapter_note_card_list.push(card);
-    }
-    // chapter_note_card_list.reverse();  // 逆序列表，符合章节顺序
-    return chapter_note_card_list;
-}
-
-async function getChapterBestHighlightCards(book_id: string) {
-    let chapter_highlights = await getChapterBestHighlights(book_id);
-    let chapter_highlight_card_list = [];
-    for (const chapter of chapter_highlights) {
-        let highlights = [];
-        const chapterTitle = chapter.chapterTitle;
-        const chapterUid = chapter.chapterUid;
-        const chapterHighlights = chapter.chapterHighlights;
-        const chapterHighlightCount = chapter.chapterHighlightCount;
-
-        for (const highlight of chapterHighlights) {
-            let card = {
-                title: '', 
-                text: highlight.markText, 
-                info: `热度：${highlight.totalCount}`, 
-                key: highlight.bookmarkId, 
-                value: highlight.bookmarkId
-            }
-            highlights.push(card);
-        }
-        highlights.reverse();   // 逆序列表，符合时间序列
-        let card = {
-            chapterTitle: chapterTitle, 
-            chapterUid: chapterUid, 
-            chapterCards: highlights, 
-            chapterCardsCount: chapterHighlightCount
-        }
-        chapter_highlight_card_list.push(card);
-    }
-    // chapter_highlight_card_list.reverse();  // 逆序列表，符合章节顺序
-    return chapter_highlight_card_list;
-}
-
-async function getCardsByFilter(book_id: string, config?: WereadConfig, cards?: any[]) {
-    let filter = config.weread.filterHighlight;
-    if (filter == '1') {
-        cards = await getChapterReviewsCards(book_id);
-    } else if (filter == '2') {
-        cards = await getChapterHighlightCards(book_id);
-    } else if (filter == '3') {
-        cards = await getChapterNoteCards(book_id);
-    } else if (filter == '4') {
-        if (book_id.startsWith('CB_') || book_id.startsWith('MP_')) {
-            showMessage('导入的书籍和公众号没有热门标注哦！');
-        } else {
-            cards = await getChapterBestHighlightCards(book_id);
-        }
+async function getCardsByFilter(book_id: string, config?: WereadConfig, cards?: ChapterNoteCard[]): Promise<ChapterNoteCard[]> {
+    switch (config.weread.filterHighlight) {
+        case "1":
+            cards = await getChapterReviewCardList(book_id);
+            console.log(cards);
+            break;
+        case "2":
+            cards = await getChapterBookmarkCardList(book_id);
+            console.log(cards);
+            break;
+        case "3":
+            cards = await getChapterNoteCardList(book_id);
+            break;
+        case "4":
+            const isMp = book_id.startsWith('CB_') || book_id.startsWith('MP_')
+            if (isMp) { showMessage('导入的书籍和公众号没有热门标注哦！'); break; }
+            cards = await getChapterBestBookmarkCardList(book_id);
+            break;
+        default:
+            console.log(`筛选模式有误: ${config.weread.filterHighlight}`);
+            break;
     }
     return cards;
 }
 
 // 
 
-async function syncSelectCards(book_id?: string, config?: WereadConfig) {
+async function syncSelectCards(bookId?: string, config?: WereadConfig) {
     // 获取所有选中卡片
-    let marks_and_reviews_id = [];
-    let checkbox = document.getElementsByName('card-name');
-    for (let i = 0; i < checkbox.length; i++) {
-        if (checkbox[i]['checked']) {
-            marks_and_reviews_id.push(checkbox[i]['value']);
-        }
-    }
-
+    const checkbox = Array.from(document.getElementsByName('card-name')) as HTMLInputElement[];
+    const cardIdList = checkbox.filter(element => element.checked).map(element => element.id);
     // 获取书籍信息
-    let metadata = await getMetadata(book_id);
-    let highlights = await getHighlights(book_id);
-    let highlights_checked = [];
-    let reviews =  await getReviews(book_id);
-    let reveiws_checked = [];
-    let bestHighlights = await getBestHighlights(book_id);
-    let bestHighlights_checked = [];
-
-    for (const id of marks_and_reviews_id) {
-        let highlight = highlights.filter(highlight => highlight.bookmarkId === id)[0];
-        let review = reviews.filter(review => review.reviewId === id)[0];
-        let bestHighlight = bestHighlights.filter(highlight => highlight.bookmarkId === id)[0];
-        if (highlight) {
-            highlights_checked.push(highlight);
-        }
-        if (review) {
-            reveiws_checked.push(review);
-        }
-        if (bestHighlight) {
-            bestHighlights_checked.push(bestHighlight);
-        }
-    }
-
+    const metadata = await getMetadata(bookId);
+    const chapterCardList = config.weread.filterHighlight === "4"
+        ? await getChapterNoteCardList(bookId)
+        : await getChapterBestBookmarkCardList(bookId)
+    chapterCardList.forEach((chapter) => {
+        const noteList = chapter.chapterCards;
+        chapter.chapterCards = noteList.filter((note) => cardIdList.includes(note.key));
+    })
     // 导入文档
-    if (bestHighlights) {
-        await syncBestNotes(book_id, metadata, bestHighlights_checked, config);
+    if (config.weread.filterHighlight === "4") {
+        await syncBestNotes(bookId, metadata, chapterCardList, config);
     } else {
-        await syncNotes(book_id, metadata, highlights_checked, reveiws_checked, config);
+        await syncNotes(bookId, metadata, chapterCardList, config);
     }
     showMessage('导入完成！');
 }
@@ -331,7 +159,7 @@ async function syncSelectCards(book_id?: string, config?: WereadConfig) {
 export {
     checkImportedBestCard, 
     getCardsByFilter, 
-    getMetadatasCards, 
+    getCardMetadataList as getMetadatasCards, 
     updateConfig, 
     selectCheckboxByName, 
     syncSelectCards, 
