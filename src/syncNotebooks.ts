@@ -85,7 +85,7 @@ export async function syncNotebook(bookId: string, metadata: Metadata, config: W
 }
 
 // 全部导入
-export async function syncNotebooks(config: any) {
+export async function syncNotebooks(config: WereadConfig) {
     showMessage('正在导入全部标注和笔记，这需要一段时间，请耐心等候……');
     
     const notebookList = await getMetadataList();
@@ -111,7 +111,7 @@ export async function isAttrsExist(type: DataType, weread_id: string, attr?: str
     }
     let response = await client.sql({ stmt: stmt[type] });
     let result = response.data;
-    let block_id = result.length >= 1 ? response[0]['block_id'] : '';
+    let block_id = result.length >= 1 ? result[0]['block_id'] : '';
 
     return block_id;
 }
