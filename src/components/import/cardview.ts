@@ -85,15 +85,15 @@ function updateCardGroupFold(chapterUid: string) {
     }
 }
 
-async function checkImportedBestCard(book_id: string, config: WereadConfig) {
+async function checkImportedBestCard(bookId: string, config: WereadConfig) {
     // 选中所有已导入内容，防止误删
     let filter = config.weread.filterHighlight;
-    let root_id = await isAttrsExist('custom', book_id, 'custom-book-id-best-highlight');
+    let root_id = await isAttrsExist('custom', bookId, 'custom-book-id-best-highlight');
     // 不进行后续查找操作: 1. 不存在热门标注文档; 2. 没有展示热门标注
     if (!root_id || filter != '4') {
         return;
     }
-    let best_highlights = await getNotebookBestHighlights(book_id);
+    let best_highlights = await getNotebookBestHighlights(bookId);
     console.log(best_highlights)
     for (let highlight of best_highlights.items) {
         let block_id = await isAttrsExist('bookmark', highlight.bookmarkId);

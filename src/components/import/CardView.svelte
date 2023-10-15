@@ -32,6 +32,7 @@
 
     onMount(async () => {
         // [反应性更新需要先赋值](https://www.svelte.cn/docs#2_%E5%8F%8D%E5%BA%94%E6%80%A7_reactive_%E5%88%86%E9%85%8D)
+        console.log(book_id);
         cards = await getCardsByFilter(book_id, config, cards);
         await checkImportedBestCard(book_id, config);
 
