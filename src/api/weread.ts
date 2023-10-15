@@ -2,6 +2,7 @@ import { IWebSocketData, fetchSyncPost } from "siyuan";
 import { getPluginConfig } from "../utils/config";
 import { getCookieBykey } from "../utils/cookie";
 import { BestBookmarkList, BookInfo, BookmarkList, ChapterInfoList, ChapterReviewList, NotebookList, ReadData, ReadDetail, ReviewList, ShelfSync } from "../types/weread";
+import { WereadConfig } from "../types/config";
 
 const baseUrl = 'https://i.weread.qq.com';
 
@@ -10,7 +11,7 @@ const baseUrl = 'https://i.weread.qq.com';
 async function requestUrl(url: string) {
     // todo: 请求失败处理
     const proxy_url = '/api/network/forwardProxy';
-    const config = getPluginConfig("siyuan-plugin-weread");
+    const config = getPluginConfig("siyuan-plugin-weread") as WereadConfig;
     const data = {
         "url": url,
         "method": "GET",
@@ -44,7 +45,7 @@ export async function getNotebooks(): Promise<NotebookList> {
  * @returns 书架数据
  */
 export async function getBookSync(): Promise<ShelfSync> {
-    const config = getPluginConfig("siyuan-plugin-weread");
+    const config = getPluginConfig("siyuan-plugin-weread") as WereadConfig;
     const wr_vid = getCookieBykey(config.Cookie, 'wr_vid');
     const url = `${baseUrl}/shelf/sync?userVid=${wr_vid}&synckey=0&lectureSynckey=0​`;
     const response: ShelfSync = await requestUrl(url);

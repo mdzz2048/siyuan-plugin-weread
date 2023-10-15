@@ -1,13 +1,11 @@
 import { Plugin } from "siyuan";
-import { WereadConfig } from "../types/config";
 
-export function getPluginConfig(plugin_name: string): WereadConfig | null {
+export function getPluginConfig(plugin_name: string, storageName = "config") {
     const plugins: Plugin[] = window["siyuan"]["ws"]["app"]["plugins"];
     for(let index = 0; index < plugins.length; index++) {
         const plugin = plugins[index];
         if (plugin.name === plugin_name) {
-            return plugin["config"] as WereadConfig;
+            return plugin.data[storageName];
         }
     }
-    return null;
 }
