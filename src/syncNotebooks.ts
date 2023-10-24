@@ -142,6 +142,7 @@ export async function parseHighlightTemplate(template: string, object: Highlight
         '{{chapterTitle}}': object.chapterTitle, 
         '{{bookmarkId}}': object.bookmarkId, 
         '{{markText}}': object.markText, 
+        '{{markRowText}}': object.markText,
         '{{createTime}}': create_time, 
         '{{style}}': object.style, 
         '{{type}}': object.type, 
@@ -182,6 +183,7 @@ export async function parseBestHighlightTemplate(template: string, object: BestH
         '{{chapterTitle}}': object.chapterTitle, 
         '{{bookmarkId}}': object.bookmarkId, 
         '{{markText}}': object.markText, 
+        '{{markRowText}}': object.markText,
         '{{totalCount}}': object.totalCount
     }
 
