@@ -8,6 +8,7 @@ import {
     setBlockAttrs, 
     updateBlock, 
 } from "./api/siyuan";
+import { WereadConfig } from "./types/config";
 
 
 /* ------------------------ 工具函数 ------------------------ */
@@ -308,19 +309,23 @@ async function getDoc1 (book_id: string, config: any, highlights?: Highlight[], 
 
 // 无章节标题
 async function getDoc2 (config: any, highlights?: Highlight[], reviews?: Review[], book_id?: string) {
-    if (!highlights && !reviews && book_id) {
+    const highlights_parsed = [];
+    const review_parsed = [];
+    if (highlights.length === 0 && reviews.length === 0 && book_id) {
         // 单本导入，补全 highlights 和 reviews 信息
         highlights = await getHighlights(book_id);
         reviews = await getReviews(book_id);
     }
-    let highlight = highlights
-        .map(async (highlight) => await parseHighlightTemplate(config.siyuan.highlightTemplate, highlight))
-        .join('\n\n');
-    let review = reviews
-        .map(async (review) => await parseReviewTemplate(config.siyuan.noteTemplate, review))
-        .join('\n\n');
-
-    return highlight + "\n\n" + review;
+    for (const highlight of highlights) {
+        const parsed =  await parseHighlightTemplate(config.siyuan.highlightTemplate, highlight);
+        highlights_parsed.push(parsed);
+    }
+    for (const review of reviews) {
+        const parsed = await parseReviewTemplate(config.siyuan.noteTemplate, review);
+        review_parsed.push(parsed);
+    }
+    
+    return highlights_parsed.join('\n\n') + "\n\n" + review_parsed.join('\n\n');
 }
 
 
@@ -405,14 +410,15 @@ export async function syncBestNotes(book_id: string, metadata: Metadata, best_hi
 }
 
 // 单本导入
-export async function syncNotebook(book_id: string, metadata: Metadata, config: any) {
+export async function syncNotebook(book_id: string, metadata: Metadata, config: WereadConfig) {
     let root_id = await isAttrsExist('doc', book_id);
     let import_with_chapter = config.siyuan.importType;
 
     // 获取待导入内容
     let docData = '';
     let docTemplate = parseMetadataTemplate(config.siyuan.docTemplate, metadata);
-    if (import_with_chapter == 1) {
+    console.log(import_with_chapter);
+    if (import_with_chapter == "1") {
         // 含章节标题
         docData = await getDoc1(book_id, config);
     } else {
