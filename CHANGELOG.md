@@ -1,3 +1,7 @@
+# 1.2.4
+Fix：
+- 修复无章节导入模式导入异常的情况
+
 # 1.2.3
 Fix: 
 - [添加 {{markRowText}} 字段](https://github.com/mdzz2048/siyuan-plugin-weread/issues/24)
