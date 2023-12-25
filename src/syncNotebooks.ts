@@ -402,6 +402,7 @@ async function parseDoc (bookId: string, config: WereadConfig, chapterCardList: 
                     break;
                 default:
                     console.log("笔记解析失败!", note);
+
             }
         })
     })

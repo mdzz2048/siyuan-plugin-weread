@@ -61,6 +61,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
             <li>{{createTime}} - 创建时间</li>
             <li>{{range}} - 划线范围</li>
             <li>{{markText}} - 划线文本</li>
+            <li>{{markRowText}} - 划线文本原始内容</li>
         </ul>`
     const review_str = `<p>笔记模板</p>
         <ul>
@@ -76,6 +77,7 @@ REF: https://github.com/siyuan-note/plugin-sample-vite-svelte/blob/main/src/libs
             <li>{{chapterUid}} - 章节 ID</li>
             <li>{{chapterTitle}} - 章节标题</li>
             <li>{{markText}} - 划线文本</li>
+            <li>{{markRowText}} - 划线文本原始内容</li>
             <li>{{totalCount}} - 标记人数</li>
         </ul>`
 
