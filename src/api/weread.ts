@@ -150,7 +150,23 @@ export async function getReadDetail(type=1, count=3, monthTimestamp?: number): P
  * @returns 阅读数据
  */
 export async function getReadData(): Promise<ReadData> {
+    // 获取每月阅读最久的书
+    // /readdata/detail?mode=monthly&defaultPreferBook=0&baseTime=1698768000
+    // 获取总阅读时长最久的书。有所有的统计信息，包括：喜好的书、阅读情况
+    // /readdata/detail?mode=overall&defaultPreferBook=0&baseTime=0
     const url = `${baseUrl}/readdata/summary?synckey=0`;
     const response: ReadData = await requestUrl(url);
+    return response;
+}
+
+/**
+ * 获取指定书籍的阅读数据
+ * @returns 阅读数据
+ */
+export async function getReadInfo(bookId: string) {
+    // 获取笔记信息之类的数据需要加其他参数，只获取阅读记录只要 readingDetail 和 bookId 即可
+    // const fullInfo = `?noteCount=1&readingDetail=1&finishedBookIndex=1&readingBookCount=1&finishedBookCount=1&bookId=${bookId}&finishedDate=1`
+    const url = `${baseUrl}/readinfo?readingDetail=1&bookId=${bookId}`;
+    const response = await requestUrl(url);
     return response;
 }
