@@ -13,26 +13,21 @@
     "build": "vite build"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^2.0.3",
-    "@tsconfig/svelte": "^4.0.1",
-    "@types/node": "^20.2.0",
-    "fast-glob": "^3.2.12",
+    "@siyuan-community/siyuan-sdk": "0.3.6",
+    "@types/node": "^20.11.0",
+    "fast-glob": "^3.3.2",
     "glob": "^7.2.3",
     "minimist": "^1.2.8",
     "rollup-plugin-livereload": "^2.0.5",
     "siyuan": "0.8.4",
-    "svelte": "^3.57.0",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.0.4",
-    "vite": "^4.3.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "vite": "^4.5.1",
     "vite-plugin-static-copy": "^0.15.0",
-    "vite-plugin-zip-pack": "^1.0.5"
+    "vite-plugin-zip-pack": "^1.0.7"
   },
   "dependencies": {
-    "@siyuan-community/siyuan-sdk": "0.3.2",
-    "axios": "^1.4.0",
-    "deepmerge": "^4.3.1",
-    "jsonpath": "^1.1.1",
-    "less": "4.2.0"
+    "pinia": "^2.1.7",
+    "vue": "3.4.8"
   }
 }
