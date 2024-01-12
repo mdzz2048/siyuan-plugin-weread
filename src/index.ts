@@ -1,9 +1,10 @@
 import { Plugin, showMessage, Dialog, Menu, openTab, getFrontend } from "siyuan";
 import { checkConfigCookie } from "./utils/cookie";
 import { syncNotebooks } from "./syncNotebooks";
-import { CardView, Settings, PanelSync } from "./components";
+import { Setting, DialogSync } from "./components";
 import { DEFAULT_CONFIG } from "./config/default";
 import { WereadConfig } from "./types/config";
+import { createApp } from "vue";
 
 const GLOBAL_CONFIG_NAME = "config";
 
@@ -121,7 +122,7 @@ export default class Weread extends Plugin {
     async openSetting() {
         await checkConfigCookie(this.config);   // Cookie 可能过期，需要重新检查
 
-        const dialog = new Dialog({
+        new Dialog({
             title: "设置",
             content: `<div id="WereadSetting"></div>`,
             width: "720px",
@@ -129,21 +130,22 @@ export default class Weread extends Plugin {
             destroyCallback: (options) => {
                 console.log("destroyCallback", options);
                 // You must destroy the component when the dialog is closed
-                pannel.$destroy();
+                // pannel.$destroy();
             }
         });
-        const pannel = new Settings({
-            target: dialog.element.querySelector("#WereadSetting"),
-            props: {
-                config: this.config,
-                plugin: this,
-            }
-        });
+        createApp(Setting).mount("#WereadSetting")
+        // const pannel = new Settings({
+        //     target: dialog.element.querySelector("#WereadSetting"),
+        //     props: {
+        //         config: this.config,
+        //         plugin: this,
+        //     }
+        // });
     }
 
     private async openImportPanel() {
         await checkConfigCookie(this.config);   // Cookie 可能过期，需要重新检查
-        const dialog = new Dialog({
+        new Dialog({
             title: "导入",
             content: `<div id="WereadImport"></div>`,
             width: "420px",
@@ -151,33 +153,34 @@ export default class Weread extends Plugin {
             destroyCallback(options) {
                 console.log("destroyCallback", options);
                 // You must destroy the component when the dialog is closed
-                pannel.$destroy();
+                // pannel.$destroy();
             },
         })
-        const pannel = new PanelSync({
-            target: dialog.element.querySelector("#WereadImport"),
-            props: {
-                config: this.config,
-                plugin: this,
-            }
-        })
+        createApp(DialogSync).mount("#WereadImoprt")
+        // const pannel = new DialogSync({
+        //     target: dialog.element.querySelector("#WereadImport"),
+        //     props: {
+        //         config: this.config,
+        //         plugin: this,
+        //     }
+        // })
     }
 
     private async openImportTab() {
         await checkConfigCookie(this.config);   // Cookie 可能过期，需要重新检查
-        const config = this.config;
-        const plugin = this;
+        // const config = this.config;
+        // const plugin = this;
         const tab = this.addTab({
             type: 'weread-import', 
             init() {
                 this.element.innerHTML = '<div id="CardView" style="height: 100%"></div>';
-                new CardView({
-                    target: this.element.querySelector('#CardView'),
-                    props: {
-                        config: config, 
-                        plugin: plugin, 
-                    }
-                })
+                // new CardView({
+                //     target: this.element.querySelector('#CardView'),
+                //     props: {
+                //         config: config, 
+                //         plugin: plugin, 
+                //     }
+                // })
             }
         })
         openTab({
