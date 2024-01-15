@@ -1,3 +1,6 @@
 [submodule "src/components/siyuan"]
 	path = src/components/siyuan
 	url = git@github.com:mdzz2048/siyuan-plugin-components.git
+[submodule "src/components/card-manage"]
+	path = src/components/card-manage
+	url = git@github.com:mdzz2048/card-manage.git
