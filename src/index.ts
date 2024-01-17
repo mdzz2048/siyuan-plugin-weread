@@ -1,12 +1,17 @@
 import { Plugin, showMessage, Dialog, Menu, openTab, getFrontend } from "siyuan";
 import { checkConfigCookie } from "./utils/cookie";
 import { syncNotebooks } from "./syncNotebooks";
-import { Setting, DialogSync } from "./components";
+import { Setting, DialogSync, CardView } from "./components";
 import { DEFAULT_CONFIG } from "./config/default";
 import { WereadConfig } from "./types/config";
 import { createApp } from "vue";
+import { usePlugin } from "./utils/config";
+import { createPinia } from "pinia";
 
 const GLOBAL_CONFIG_NAME = "config";
+const pinia = createPinia()
+
+// todo: 重构菜单添加方式、
 
 /**
  * 获取元素的 DOMRect 信息
@@ -46,6 +51,16 @@ export default class Weread extends Plugin {
         topBarElement.addEventListener('contextmenu', () => {
             const rect = getDOMRect(topBarElement);
             this.addContextMenu(rect);
+        })
+
+        // 绑定插件对象
+        usePlugin(this)
+
+        this.addTab({
+            type: 'weread-import', 
+            init() {
+                this.element.innerHTML = '<div id="CardView" style="height: 100%"></div>'
+            }
         })
     }
 
@@ -124,7 +139,7 @@ export default class Weread extends Plugin {
 
         new Dialog({
             title: "设置",
-            content: `<div id="WereadSetting"></div>`,
+            content: `<div id="WereadSetting" class="fn__flex-column"></div>`,
             width: "720px",
             height: "640px", 
             destroyCallback: (options) => {
@@ -133,14 +148,11 @@ export default class Weread extends Plugin {
                 // pannel.$destroy();
             }
         });
-        createApp(Setting).mount("#WereadSetting")
-        // const pannel = new Settings({
-        //     target: dialog.element.querySelector("#WereadSetting"),
-        //     props: {
-        //         config: this.config,
-        //         plugin: this,
-        //     }
-        // });
+        const app = createApp(Setting, {
+            config: this.config
+        })
+        app.use(pinia)
+        app.mount("#WereadSetting")
     }
 
     private async openImportPanel() {
@@ -156,46 +168,26 @@ export default class Weread extends Plugin {
                 // pannel.$destroy();
             },
         })
-        createApp(DialogSync).mount("#WereadImoprt")
-        // const pannel = new DialogSync({
-        //     target: dialog.element.querySelector("#WereadImport"),
-        //     props: {
-        //         config: this.config,
-        //         plugin: this,
-        //     }
-        // })
+        const app = createApp(DialogSync)
+        app.mount("#WereadImoprt")
     }
 
     private async openImportTab() {
-        await checkConfigCookie(this.config);   // Cookie 可能过期，需要重新检查
-        // const config = this.config;
-        // const plugin = this;
-        const tab = this.addTab({
-            type: 'weread-import', 
-            init() {
-                this.element.innerHTML = '<div id="CardView" style="height: 100%"></div>';
-                // new CardView({
-                //     target: this.element.querySelector('#CardView'),
-                //     props: {
-                //         config: config, 
-                //         plugin: plugin, 
-                //     }
-                // })
-            }
-        })
-        openTab({
+        // await checkConfigCookie(this.config);   // Cookie 可能过期，需要重新检查
+        const openedTab = await openTab({
             app: this.app, 
             custom: {
                 title: '导入预览', 
                 icon: 'iconDownload', 
                 id: this.name + "weread-import",
-                data: {
-                    tab
-                }
             }, 
             position: 'right', 
             keepCursor: true
         })
+        console.log(openedTab)
+        const app = createApp(CardView)
+        app.use(pinia)
+        app.mount(openedTab.panelElement.firstElementChild)
     }
 
     public async resetConfig() {
