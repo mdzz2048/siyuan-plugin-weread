@@ -5,6 +5,7 @@ import { getConfigBlob, updatePluginConfig } from "./config";
 /* ------------------------ 检测 Cookie 是否可用 ------------------------ */
 
 export async function checkCookie(cookie: string) {
+    // todo: 检查 Cookie 还要根据弹窗里的登录状态来
     // 检测 Cookie 可用性
     let url = '/api/network/forwardProxy';
     let data = {

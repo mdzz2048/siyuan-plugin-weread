@@ -2,6 +2,9 @@ import { defineStore } from "pinia";
 import { client } from "../api/siyuan";
 import { IOption } from "../components/siyuan/siyuan/setting";
 import { Ref, computed, ref } from "vue";
+import { getChapterNoteCardList, getMetadataList } from "../utils/parse";
+import { ChapterNoteCard } from "../types/card";
+import { Metadata } from "../types/weread";
 
 export const useSiyuanNotebookStore = defineStore('siyuanNotebooks', {
     state: async () => {
@@ -31,6 +34,42 @@ export const useConfStore = defineStore('config', {
         return {
             notebook: "",
         }
+    }
+})
+
+export const useWereadStore = defineStore('weread', {
+    state: () => ({
+        metadatas: [],
+        notes: {},
+        selected: "",
+    }),
+    actions: {
+        async getMetadatas() {
+            this.metadatas = await getMetadataList()
+        },
+        getMetadata(bookId: string): Metadata {
+            return this.metadatas.find((book: Metadata) => book.bookId === bookId)
+        },
+        getBookNotes(bookId: string): ChapterNoteCard[] {
+            return this.notes[bookId]
+        },
+        isBookNotesExist(bookId: string): boolean {
+            return Object.keys(this.notes).includes(bookId)
+        },
+        async addBookNotes(bookId: string) {
+            this.notes[bookId] = await getChapterNoteCardList(bookId)
+        },
+        async refereshBookNotes(bookId: string): Promise<ChapterNoteCard[]> {
+            const notes = await getChapterNoteCardList(bookId)
+            this.notes[bookId] = notes
+            return notes
+        },
+        async removeBookNotes(bookId: string) {
+            delete this.notes[bookId]
+        },
+        setSelectedBook(bookId: string) {
+            this.selected = bookId
+        },
     }
 })
 

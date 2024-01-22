@@ -137,7 +137,9 @@ export interface BookInfo extends Book {
 }
 
 export interface Metadata extends Notebook {
-    book: BookInfo
+    book: BookInfo,
+    bookPcUrl?: string,
+    bookMobileUrl?: string,
 }
 
 /**
@@ -155,6 +157,8 @@ interface ChapterInfo {
     updated: ChapterUpdated[]
     synckey: number,
     book: Book,
+    chapterPcUrl?: string,
+    chapterMobileUrl?: string,
 }
 
 interface ChapterUpdated extends Chapter {
@@ -180,7 +184,7 @@ export interface BookmarkList {
     refMpInfos: MpInfo[],
 }
 
-interface BookmarkSelf extends Bookmark{
+interface BookmarkSelf extends Bookmark {
     style: number,
     type: number,
     createTime: number,

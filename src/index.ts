@@ -1,7 +1,7 @@
 import { Plugin, showMessage, Dialog, Menu, openTab, getFrontend } from "siyuan";
 import { checkConfigCookie } from "./utils/cookie";
 import { syncNotebooks } from "./syncNotebooks";
-import { Setting, DialogSync, CardView } from "./components";
+import { Setting, DialogSync, CardManage } from "./components";
 import { DEFAULT_CONFIG } from "./config/default";
 import { WereadConfig } from "./types/config";
 import { createApp } from "vue";
@@ -9,6 +9,7 @@ import { usePlugin } from "./utils/config";
 import { createPinia } from "pinia";
 
 const GLOBAL_CONFIG_NAME = "config";
+const TAB_TYPE_IMPORT = "weread-import";
 const pinia = createPinia()
 
 // todo: 重构菜单添加方式、
@@ -31,6 +32,7 @@ function getDOMRect(element: HTMLElement): DOMRect {
 }
 
 export default class Weread extends Plugin {
+
     private config: WereadConfig;
     private isMobile: boolean;
 
@@ -57,9 +59,15 @@ export default class Weread extends Plugin {
         usePlugin(this)
 
         this.addTab({
-            type: 'weread-import', 
+            type: TAB_TYPE_IMPORT, 
             init() {
                 this.element.innerHTML = '<div id="CardView" style="height: 100%"></div>'
+            },
+            beforeDestroy() {
+                console.log("before destroy tab:", TAB_TYPE_IMPORT);
+            },
+            destroy() {
+                console.log("destroy tab:", TAB_TYPE_IMPORT);
             }
         })
     }
@@ -173,21 +181,26 @@ export default class Weread extends Plugin {
     }
 
     private async openImportTab() {
-        // await checkConfigCookie(this.config);   // Cookie 可能过期，需要重新检查
-        const openedTab = await openTab({
-            app: this.app, 
-            custom: {
-                title: '导入预览', 
-                icon: 'iconDownload', 
-                id: this.name + "weread-import",
-            }, 
-            position: 'right', 
-            keepCursor: true
-        })
-        console.log(openedTab)
-        const app = createApp(CardView)
+        await checkConfigCookie(this.config);   // Cookie 可能过期，需要重新检查
+        // todo: 重载窗口应该销毁 Tab
+        let tab = document.querySelector('#CardView')
+        if (!tab) {
+            const openedTab = await openTab({
+                app: this.app, 
+                custom: {
+                    title: '导入预览', 
+                    icon: 'iconDownload', 
+                    id: this.name + TAB_TYPE_IMPORT,
+                }, 
+                position: 'right', 
+                keepCursor: true
+            })
+            console.log(openedTab)
+            tab = openedTab.panelElement.firstElementChild
+        }
+        const app = createApp(CardManage)
         app.use(pinia)
-        app.mount(openedTab.panelElement.firstElementChild)
+        app.mount(tab)
     }
 
     public async resetConfig() {

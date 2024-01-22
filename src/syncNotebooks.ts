@@ -4,42 +4,18 @@ import { WereadConfig } from "./types/config";
 import { ChapterNoteCard } from "./types/card";
 import { BookmarkBest, BookmarkSelf, Metadata, Review } from "./types/weread";
 import { getMetadataList, getChapterNoteCardList, parseTimeStamp } from "./utils/parse";
-import { getNotebookBestHighlights, getNotebookHighlights, getNotebookReviews } from "./api/weread";
+import { sendRequest } from "./utils/network";
 
 /* ------------------------ 导入函数 ------------------------ */
 
-// 部分导入
-export async function syncNotes(bookId: string, metadata: Metadata, chapterCardList: ChapterNoteCard[], config: WereadConfig) {
-    const rootId = await isAttrsExist('doc', bookId);
-    // 获取待导入内容
-    const docData = config.siyuan.importType === "1"
-        ? await parseChapterDoc(bookId, config, chapterCardList)
-        : await parseDoc(bookId, config, chapterCardList)
-    const docTemplate = parseMetadataTemplate(config.siyuan.docTemplate, metadata);
-
-    if (!rootId) {
-        // 需要新建微信读书文档（没有找到符合自定义属性的文档）
-        let path = config.siyuan.savePath 
-            ? config.siyuan.savePath + '/' + metadata.book.title
-            : '/' + metadata.book.title;
-        let docAttr = {
-            'custom-book-id': bookId
-        }
-        const rootId = await creatDoc(config.siyuan.notebook, docTemplate, docAttr, path);
-        await updateDoc(rootId, `${docTemplate}\n\n${docData}\n\n{: custom-book-id=\"${bookId}\"}`);
-    } else {
-        // 文档粒度的覆盖更新
-        await updateDoc(rootId, `${docTemplate}\n\n${docData}\n\n{: custom-book-id=\"${bookId}\"}`);
-    }
-}
-
 // 导入热门标注
+// todo: remove
 export async function syncBestNotes(bookId: string, metadata: Metadata, chapterCardList: ChapterNoteCard[], config: WereadConfig) {
     const rootId = await isAttrsExist('custom', bookId, 'custom-book-id-best-highlight');
     // 获取待导入内容
     const docData = config.siyuan.importType === "1"
-        ? await parseChapterDoc(bookId, config, chapterCardList)
-        : await parseDoc(bookId, config, chapterCardList)
+        ? await parseChapterDoc(config, chapterCardList)
+        : await parseDoc(config, chapterCardList)
     const docTemplate = parseMetadataTemplate(config.siyuan.docTemplate, metadata);
 
     if (!rootId) {
@@ -64,8 +40,8 @@ export async function syncNotebook(bookId: string, metadata: Metadata, config: W
     const chapterCardList = await getChapterNoteCardList(bookId);
     // 获取待导入内容
     const docData = config.siyuan.importType === "1"
-        ? await parseChapterDoc(bookId, config, chapterCardList)
-        : await parseDoc(bookId, config, chapterCardList)
+        ? await parseChapterDoc(config, chapterCardList)
+        : await parseDoc(config, chapterCardList)
     const docTemplate = parseMetadataTemplate(config.siyuan.docTemplate, metadata);
 
     if (!rootId) {
@@ -86,16 +62,16 @@ export async function syncNotebook(bookId: string, metadata: Metadata, config: W
 
 // 全部导入
 export async function syncNotebooks(config: WereadConfig) {
-    showMessage('正在导入全部标注和笔记，这需要一段时间，请耐心等候……');
+    showMessage('正在导入……');
     
     const notebookList = await getMetadataList();
-    notebookList.forEach(async (notebook) => {
-        const bookId = notebook.bookId;
-        console.log(`正在导入：${notebook.book.title}`);
-        await syncNotebook(bookId, notebook, config);
+    const bodyList = notebookList.map(notebook => [notebook.bookId, notebook, config])
+    // 控制并发
+    sendRequest(5, bodyList, syncNotebook, () => {
+        console.log("导入完成")
     })
 
-    showMessage('已导入全部标注和笔记！')
+    showMessage('导入完成')
 }
 
 /* ------------------------ 工具函数 ------------------------ */
@@ -329,11 +305,8 @@ export async function parseReviewTemplate(template: string, review: Review) {
 /* ------------------------ 导入辅助函数 ------------------------ */
 
 // 含章节标题
-async function parseChapterDoc (bookId: string, config: WereadConfig, chapterCardList: ChapterNoteCard[]) {
-    const parsedChapterList = [];
-    const reviewList = await getNotebookReviews(bookId);
-    const bookmarkList = await getNotebookHighlights(bookId);
-    const bestBookmarkList = await getNotebookBestHighlights(bookId);
+async function parseChapterDoc(config: WereadConfig, chapterCardList: ChapterNoteCard[]): Promise<string> {
+    const parsedChapterList: string[] = [];
     for (const chapter of chapterCardList) {
         const title = chapter.chapterTitle;
         const uid = chapter.chapterUid;
@@ -344,23 +317,21 @@ async function parseChapterDoc (bookId: string, config: WereadConfig, chapterCar
             switch (note.value) {
                 case "bookmark":
                     template = config.siyuan.highlightTemplate;
-                    const bookmark = bookmarkList.updated.find(bookmark => bookmark.bookmarkId === note.value);
-                    if (bookmark === undefined) { console.log(`未找到 ${note.key}: ${note.value}`); break; }
+                    const bookmark = note.data as BookmarkSelf
+                    console.log('parseChapterDoc', bookmark)
                     const parsedBookmark = await parseHighlightTemplate(template, bookmark, chapter.chapterTitle);
                     parsedNote.push(parsedBookmark);
                     break;
                 case "review":
                     template = config.siyuan.noteTemplate;
-                    const review =  reviewList.reviews.find(review => review.reviewId === note.value);
-                    if (review === undefined) { console.log(`未找到 ${note.key}: ${note.value}`); break; }
-                    const parsedReview = await parseReviewTemplate(template, review.review);
+                    const review = note.data as Review
+                    const parsedReview = await parseReviewTemplate(template, review);
                     parsedNote.push(parsedReview);
                     break;
                 case "bestBookmark":
                     template = config.siyuan.bestHighlightTemplate;
-                    const bestBookmark = bestBookmarkList.items.find(bookmark => bookmark.bookmarkId === note.value);
-                    if (bestBookmark === undefined) { console.log(`未找到 ${note.key}: ${note.value}`); break; }
-                    const parsedBestBookmark = await parseBestHighlightTemplate(template, bestBookmark, chapter.chapterTitle);
+                    const bestBookmark = note.data as BookmarkBest
+                    const parsedBestBookmark = await parseBestHighlightTemplate(template, bestBookmark, chapter.chapterTitle)
                     parsedNote.push(parsedBestBookmark);
                     break;
                 default:
@@ -374,27 +345,23 @@ async function parseChapterDoc (bookId: string, config: WereadConfig, chapterCar
 }
 
 // 无章节标题
-async function parseDoc (bookId: string, config: WereadConfig, chapterCardList: ChapterNoteCard[]) {
+async function parseDoc(config: WereadConfig, chapterCardList: ChapterNoteCard[]) {
     const parsedReviewList = [];
     const parsedBookmarkList = [];
-    const reviewList = await getNotebookReviews(bookId);
-    const bookmarkList = await getNotebookHighlights(bookId);
     let template = "";
-    chapterCardList.forEach(chapter => {
-        chapter.chapterCards.forEach(async note => {
+    for (const chapter of chapterCardList) {
+        for (const note of chapter.chapterCards) {
             switch (note.value) {
                 case "bookmark":
                     template = config.siyuan.highlightTemplate;
-                    const bookmark = bookmarkList.updated.find(bookmark => bookmark.bookmarkId === note.value);
-                    if (bookmark === undefined) { console.log(`未找到 ${note.key}: ${note.value}`); break; }
+                    const bookmark = note.data as BookmarkSelf
                     const parsedBookmark = await parseHighlightTemplate(template, bookmark, chapter.chapterTitle);
                     parsedBookmarkList.push(parsedBookmark);
                     break;
                 case "review":
                     template = config.siyuan.noteTemplate;
-                    const review =  reviewList.reviews.find(review => review.reviewId === note.value);
-                    if (review === undefined) { console.log(`未找到 ${note.key}: ${note.value}`); break; }
-                    const parsedReview = await parseReviewTemplate(template, review.review);
+                    const review = note.data as Review
+                    const parsedReview = await parseReviewTemplate(template, review);
                     parsedReviewList.push(parsedReview);
                     break;
                 case "bestBookmark":
@@ -404,7 +371,7 @@ async function parseDoc (bookId: string, config: WereadConfig, chapterCardList: 
                     console.log("笔记解析失败!", note);
 
             }
-        })
-    })
+        }
+    }
     return parsedBookmarkList.join('\n\n') + "\n\n" + parsedReviewList.join('\n\n');
 }

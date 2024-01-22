@@ -1,18 +1,12 @@
-export interface BookCard {
-    title: string,
-    text: string,
-    info: string,
-    url: string,
-    key: string,
-    value: string,
-}
+import { Review, BookmarkSelf, BookmarkBest } from "./weread"
 
 export interface NoteCard {
     title: string,
     text: string,
     info: string,
     key: string,
-    value: string,
+    value: "bookmark" | "bestBookmark" | "review",
+    data: Review | BookmarkSelf | BookmarkBest
 }
 
 export interface ChapterNoteCard {

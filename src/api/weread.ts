@@ -1,4 +1,3 @@
-import { IWebSocketData, fetchSyncPost } from "siyuan";
 import { getPluginConfig } from "../utils/config";
 import { getCookieBykey } from "../utils/cookie";
 import { BestBookmarkList, BookInfo, BookmarkList, ChapterInfoList, ChapterReviewList, NotebookList, ReadData, ReadDetail, ReviewList, ShelfSync } from "../types/weread";
@@ -10,22 +9,17 @@ const baseUrl = 'https://i.weread.qq.com';
 
 async function requestUrl(url: string) {
     // todo: 请求失败处理
-    const proxy_url = '/api/network/forwardProxy';
     const config = getPluginConfig("siyuan-plugin-weread") as WereadConfig;
-    const data = {
-        "url": url,
-        "method": "GET",
-        "timeout": 5000,
-        "contentType": "application/json",
-        "headers": [
-            {
-                "Cookie": config.Cookie
-            }
-        ],
-        "payload": {}
-    }
-    const response: IWebSocketData = await fetchSyncPost(proxy_url, data);
-    return JSON.parse(response.data['body']);
+    // const config = usePlugin().data
+    const response = await fetch(url, {
+        method: "GET",
+        "headers": {
+            "Content-Type": "application/json",
+            "accessToken": getCookieBykey(config.Cookie, "wr_skey"),
+            "vid": config.weread.userVid,
+        },
+    });
+    return await response.json();
 }
 
 /* ------------------------ 微信读书 API ------------------------*/
