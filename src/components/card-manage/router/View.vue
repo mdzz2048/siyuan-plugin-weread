@@ -148,7 +148,7 @@ const showBooks: Ref<Metadata[]> = ref([])
 const showNotes: Ref<ChapterNoteCard[]> = ref([])
 const selectedBook: Ref<Metadata> = ref()
 const loadingInstance = ElLoading.service({
-    target: "#CardView",
+    target: "#card-manage",
 })
 
 onMounted(async () => {

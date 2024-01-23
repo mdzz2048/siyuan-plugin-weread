@@ -1,6 +1,6 @@
 <!-- todo: 弄一个布局组件，避免引入 element-plus -->
 <template>
-    <div class="common-layout">
+    <div class="common-layout" id="card-manage">
         <el-container class="el-container">
             <!-- 侧边栏 -->
             <el-aside class="layout-basic--navbar">
@@ -28,7 +28,7 @@ const routers = {
     Charts,
     NotFound,
 }
-const currentRouter = ref("View" ?? "NotFound")
+const currentRouter = ref("Charts" ?? "NotFound")
 </script>
 
 <style scoped>

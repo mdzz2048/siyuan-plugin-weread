@@ -12,25 +12,6 @@ const GLOBAL_CONFIG_NAME = "config";
 const TAB_TYPE_IMPORT = "weread-import";
 const pinia = createPinia()
 
-// todo: 重构菜单添加方式、
-
-/**
- * 获取元素的 DOMRect 信息
- * @param element HTML 元素
- * @returns DOMRect
- */
-function getDOMRect(element: HTMLElement): DOMRect {
-    let rect = element.getBoundingClientRect();
-    // 如果被隐藏，则使用更多按钮
-    if (rect.width === 0) {
-        rect = document.querySelector("#barMore").getBoundingClientRect();
-    }
-    if (rect.width === 0) {
-        rect = document.querySelector("#barPlugins").getBoundingClientRect();
-    }
-    return rect;
-}
-
 export default class Weread extends Plugin {
 
     private config: WereadConfig;
@@ -45,15 +26,9 @@ export default class Weread extends Plugin {
             title: 'weread',
             position: "left",
             callback: async () => {
-                const rect = getDOMRect(topBarElement);
-                this.addClickMenu(rect);
+                const rect = this.getTopBarRect(topBarElement)
+                this.addMenu(rect);
             }});
-
-        // 添加右键菜单
-        topBarElement.addEventListener('contextmenu', () => {
-            const rect = getDOMRect(topBarElement);
-            this.addContextMenu(rect);
-        })
 
         // 绑定插件对象
         usePlugin(this)
@@ -61,13 +36,9 @@ export default class Weread extends Plugin {
         this.addTab({
             type: TAB_TYPE_IMPORT, 
             init() {
-                this.element.innerHTML = '<div id="CardView" style="height: 100%"></div>'
-            },
-            beforeDestroy() {
-                console.log("before destroy tab:", TAB_TYPE_IMPORT);
-            },
-            destroy() {
-                console.log("destroy tab:", TAB_TYPE_IMPORT);
+                const app = createApp(CardManage)
+                app.use(pinia)
+                app.mount(this.element)
             }
         })
     }
@@ -82,85 +53,69 @@ export default class Weread extends Plugin {
         console.log("onunload");
     }
 
-    addClickMenu(rect?: DOMRect) {
-        const menu = new Menu("wereadIconMenu");
-        menu.addItem({
-            icon: 'iconDownload',
-            label: '单本导入',
-            click: async () => {
-                this.openImportPanel();
-            }
-        })
-        menu.addItem({
-            icon: 'iconDownload',
-            label: '全部导入',
-            click: async () => {
-                // 同步所有笔记
-                if (this.config.siyuan.notebook === "") {
-                    showMessage('请先设置导入笔记本')
-                    return;
-                }                
-                await checkConfigCookie(this.config);   // Cookie 可能过期，需要重新检查
-                await syncNotebooks(this.config);
-            }
-        })
-        if (this.isMobile) {
-            menu.fullscreen();
-        } else {
-            menu.open({
-                x: rect.right,
-                y: rect.bottom,
-                isLeft: true,
-            });
-        }
-    }
-
-    addContextMenu(rect?: DOMRect) {
-        const menu = new Menu("wereadIconContextMenu");
-        menu.addItem({
-            icon: 'iconSettings', 
-            label: '设置', 
-            click: async () => {
-                this.openSetting();
-            }
-        });
-        menu.addItem({
-            icon: 'iconDownload', 
-            label: '导入预览', 
-            click: async () => {
-                this.openImportTab();
-            }
-        });
-        if (this.isMobile) {
-            menu.fullscreen();
-        } else {
-            menu.open({
-                x: rect.right,
-                y: rect.bottom,
-                isLeft: true,
-            });
-        }
-    }
-
     async openSetting() {
-        await checkConfigCookie(this.config);   // Cookie 可能过期，需要重新检查
-
         new Dialog({
             title: "设置",
             content: `<div id="WereadSetting" class="fn__flex-column"></div>`,
             width: "720px",
             height: "640px", 
-            destroyCallback: (options) => {
-                console.log("destroyCallback", options);
-                // You must destroy the component when the dialog is closed
-                // pannel.$destroy();
-            }
         });
-        const app = createApp(Setting, {
-            config: this.config
-        })
+        const app = createApp(Setting, { config: this.config })
         app.use(pinia)
         app.mount("#WereadSetting")
+    }
+
+    private addMenu(rect: DOMRect) {
+        const menu = new Menu("pkm-tools")
+        menu.addItem({
+            icon: 'iconDownload',
+            label: '单本导入',
+            disabled: this.config.siyuan.notebook === "",
+            click: async () => this.openImportPanel()
+        })
+        menu.addItem({
+            icon: 'iconDownload',
+            label: '全部导入',
+            disabled: this.config.siyuan.notebook === "",
+            click: async () => {
+                await checkConfigCookie(this.config);   // Cookie 可能过期，需要重新检查
+                await syncNotebooks(this.config);
+            }
+        })
+        menu.addSeparator()
+        menu.addItem({
+            icon: 'iconSettings', 
+            label: '设置', 
+            click: async () => this.openSetting()
+        });
+        menu.addItem({
+            icon: 'iconDownload', 
+            label: '预览', 
+            click: async () => this.openImportTab()
+        });
+        if (this.isMobile) {
+            menu.fullscreen();
+        } else {
+            menu.open({
+                x: rect.right,
+                y: rect.bottom,
+                isLeft: true,
+            });
+        }
+    }
+
+    private getTopBarRect(topBarElement: HTMLElement): DOMRect {
+        let rect = topBarElement.getBoundingClientRect();
+        // 如果被隐藏，则使用更多按钮
+        if (rect.width === 0) {
+            const newRect = document.querySelector("#barMore")?.getBoundingClientRect();
+            rect = newRect ? newRect : rect;
+        }
+        if (rect.width === 0) {
+            const newRect = document.querySelector("#barPlugins")?.getBoundingClientRect();
+            rect = newRect ? newRect : rect;
+        }
+        return rect;
     }
 
     private async openImportPanel() {
@@ -170,11 +125,6 @@ export default class Weread extends Plugin {
             content: `<div id="WereadImport"></div>`,
             width: "420px",
             height: "640px",
-            destroyCallback(options) {
-                console.log("destroyCallback", options);
-                // You must destroy the component when the dialog is closed
-                // pannel.$destroy();
-            },
         })
         const app = createApp(DialogSync)
         app.mount("#WereadImoprt")
@@ -182,25 +132,16 @@ export default class Weread extends Plugin {
 
     private async openImportTab() {
         await checkConfigCookie(this.config);   // Cookie 可能过期，需要重新检查
-        // todo: 重载窗口应该销毁 Tab
-        let tab = document.querySelector('#CardView')
-        if (!tab) {
-            const openedTab = await openTab({
-                app: this.app, 
-                custom: {
-                    title: '导入预览', 
-                    icon: 'iconDownload', 
-                    id: this.name + TAB_TYPE_IMPORT,
-                }, 
-                position: 'right', 
-                keepCursor: true
-            })
-            console.log(openedTab)
-            tab = openedTab.panelElement.firstElementChild
-        }
-        const app = createApp(CardManage)
-        app.use(pinia)
-        app.mount(tab)
+        openTab({
+            app: this.app, 
+            custom: {
+                title: '导入预览', 
+                icon: 'iconDownload', 
+                id: this.name + TAB_TYPE_IMPORT,
+            }, 
+            position: 'right', 
+            keepCursor: true
+        })
     }
 
     public async resetConfig() {
