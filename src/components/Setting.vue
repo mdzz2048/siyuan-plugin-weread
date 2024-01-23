@@ -76,7 +76,7 @@ import type { IOption, ITab } from './siyuan/siyuan/setting';
 import { createApp, onMounted,  ref, watch } from 'vue';
 import { useSiyuanNotebookStore } from '../store';
 import { Dialog } from 'siyuan';
-
+import { ElLoading } from 'element-plus';
 import { usePlugin } from "../utils/config"
 import { checkCookie } from '../utils/cookie';
 import { WereadConfig } from '../types/config';
@@ -103,6 +103,9 @@ const notebookStore = useSiyuanNotebookStore()
 const props = defineProps<{
     config: WereadConfig,
 }>()
+const loadingInstance = ElLoading.service({
+    target: "#WereadSetting",
+})
 
 const config = ref(props.config)
 const isLogin = ref(false)
@@ -143,6 +146,7 @@ const reviewTips = `<ul>
 onMounted(async () => {
     isLogin.value = await getLoginInfo()
     notebookOption.value = await notebookStore.getNotebooksOption()
+    loadingInstance.close()
 })
 
 watch(config, () => {
@@ -202,14 +206,13 @@ async function logoutWerad() {
             // REF: https://www.electronjs.org/docs/latest/api/web-contents/#event-will-prevent-unload
             // 拦截默认关闭设置，保存配置
             event.preventDefault()
-            let cookie = await login.getWereadCookie()
-            config.value.Cookie = cookie
+            config.value.Cookie = ""
             console.log('正在关闭')
         })
     } else {
         config.value.Cookie = ""
     }
     // 更新登录状态
-    isLogin.value = await getLoginInfo()
+    isLogin.value = false
 }
 </script>
