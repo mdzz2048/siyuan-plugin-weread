@@ -1,0 +1,1 @@
+type TCardShowType = "card-detail" | "card-simple" | "list-detail" | "list-simle" | "list-title"

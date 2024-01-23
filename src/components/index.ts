@@ -1,9 +1,5 @@
-import Library from "./tab-library/Library.svelte";
-import CardView from "./tab-import/CardView.svelte";
-import Settings from "./pannel-setting/Setting.svelte";
+import DialogSync from "./dialog/Sync.vue";
+import Setting from "./Setting.vue";
+import CardManage from "./CardManage.vue";
 
-export {
-    Library, 
-    CardView, 
-    Settings
-}
+export { Setting, DialogSync, CardManage }

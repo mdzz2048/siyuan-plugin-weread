@@ -8,5 +8,23 @@
     "name": "思源",
     "hello": {
         "makesure": "使用这个模板之前，请阅读<a href=\"https://github.com/siyuan-note/plugin-sample\">官方教程</a>, 确保自己已经理解了插件的基本开发流程。"
+    },
+    "setting": {
+        "loginButton": "登录",
+        "loginTitle": "微信读书已登录",
+        "logoutButton": "退出登录",
+        "logoutTitle": "微信读书未登录",
+        "userName": "用户名",
+        "saveNotebookTitle": "保存的笔记本",
+        "saveNotebookDesc": "导入标注到该笔记本下",
+        "savePathTitle": "保存路径",
+        "savePathDesc": "以 / 开头，如：/微信读书",
+        "saveTypeTitle": "保存模式",
+        "saveTypeDesc": "<p>按章节导入：有章节标题，按内容排序</p><p>按类型导入：先导入标注，后导入想法</p>",
+        "saveDocTitle": "保存文件名",
+        "saveDocDesc": "按以下命名方式保存文件",
+        "template": {
+
+        }
     }
 }

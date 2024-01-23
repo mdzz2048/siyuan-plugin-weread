@@ -1,8 +1,11 @@
-import { fetchSyncPost, IWebSocketData } from "siyuan";
+import { fetchSyncPost, IWebSocketData, showMessage } from "siyuan";
+import { WereadConfig } from "../types/config";
+import { getConfigBlob, updatePluginConfig } from "./config";
 
 /* ------------------------ 检测 Cookie 是否可用 ------------------------ */
 
 export async function checkCookie(cookie: string) {
+    // todo: 检查 Cookie 还要根据弹窗里的登录状态来
     // 检测 Cookie 可用性
     let url = '/api/network/forwardProxy';
     let data = {
@@ -41,6 +44,25 @@ export async function checkCookie(cookie: string) {
             return new_cookie;
         }
     }
+}
+
+export async function checkConfigCookie(config: WereadConfig) {
+    showMessage('正在检查 Cookie 可用性，请稍等……');
+    const cookie = await checkCookie(config.Cookie);
+    const pluginName = "siyuan-plugin-weread";
+    const storageName = "config";
+    if (cookie === '') {
+        showMessage('微信读书鉴权失败，请重新登录');
+        config.Cookie = '';
+        updatePluginConfig(pluginName, storageName, getConfigBlob(config));
+        console.log('Cookie check failed!');
+        return;
+    }
+    console.log('Cookie check success!');
+    config.Cookie = cookie;
+    config.weread.userName = getCookieBykey(cookie, 'wr_name');
+    config.weread.userVid = getCookieBykey(cookie, 'wr_vid');
+    updatePluginConfig(pluginName, storageName, getConfigBlob(config));
 }
 
 /* ------------------------ Cookie 处理 ------------------------ */

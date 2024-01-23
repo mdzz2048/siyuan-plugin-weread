@@ -3,9 +3,13 @@ import { defineConfig, loadEnv } from "vite"
 import minimist from "minimist"
 import { viteStaticCopy } from "vite-plugin-static-copy"
 import livereload from "rollup-plugin-livereload"
-import { svelte } from "@sveltejs/vite-plugin-svelte"
+import vue from "@vitejs/plugin-vue";
 import zipPack from "vite-plugin-zip-pack";
 import fg from 'fast-glob';
+
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 const args = minimist(process.argv.slice(2))
 const isWatch = args.watch || args.w || false
@@ -17,7 +21,7 @@ console.log("distDir=>", distDir)
 
 export default defineConfig({
     plugins: [
-        svelte(),
+        vue(),
 
         viteStaticCopy({
             targets: [
@@ -42,6 +46,13 @@ export default defineConfig({
                     dest: "./i18n/",
                 },
             ],
+        }),
+        
+        AutoImport({
+            resolvers: [ElementPlusResolver()],
+        }),
+        Components({
+            resolvers: [ElementPlusResolver()],
         }),
     ],
 

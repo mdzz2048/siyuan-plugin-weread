@@ -1,148 +1,166 @@
+import { getPluginConfig } from "../utils/config";
 import { getCookieBykey } from "../utils/cookie";
-import { getFile } from "./siyuan";
-import { IWebSocketData, fetchSyncPost } from "siyuan";
-import { IUserInfo } from "weread"
+import { BestBookmarkList, BookInfo, BookmarkList, ChapterInfoList, ChapterReviewList, NotebookList, ReadData, ReadDetail, ReviewList, ShelfSync } from "../types/weread";
+import { WereadConfig } from "../types/config";
 
 const baseUrl = 'https://i.weread.qq.com';
 
 /* ------------------------工具函数------------------------ */
 
-async function getUserInfo(): Promise<IUserInfo> {
-    // todo: 换个靠谱的方法
-    let config = await getFile('data/storage/petal/siyuan-plugin-weread/config');
-    let cookie = config.Cookie;
-
-    const wr_skey = getCookieBykey(cookie, 'wr_skey');
-    const wr_vid = getCookieBykey(cookie, 'wr_vid');
-
-    const headers: IUserInfo = {
-        'token': wr_skey, 
-        'vid': wr_vid, 
-        'cookie': cookie, 
-    };
-
-    return headers;
-}
-
 async function requestUrl(url: string) {
     // todo: 请求失败处理
-    let proxy_url = '/api/network/forwardProxy';
-    let data = {
-        "url": url,
-        "method": "GET",
-        "timeout": 5000,
-        "contentType": "application/json",
-        "headers": [
-            {
-                "Cookie": (await getUserInfo()).cookie
-            }
-        ],
-        "payload": {}
-    }
-    let response: IWebSocketData = await fetchSyncPost(proxy_url, data);
-    return JSON.parse(response.data['body']);
+    const config = getPluginConfig("siyuan-plugin-weread") as WereadConfig;
+    // const config = usePlugin().data
+    const response = await fetch(url, {
+        method: "GET",
+        "headers": {
+            "Content-Type": "application/json",
+            "accessToken": getCookieBykey(config.Cookie, "wr_skey"),
+            "vid": config.weread.userVid,
+        },
+    });
+    return await response.json();
 }
 
 /* ------------------------ 微信读书 API ------------------------*/
 
-// 获取所有笔记本
-export async function getNotebooks() {
-    let url = `${baseUrl}/user/notebooks`;
-    let response = await requestUrl(url);
+/**
+ * 获取所有笔记本
+ * @returns 笔记本数据
+ */
+export async function getNotebooks(): Promise<NotebookList> {
+    const url = `${baseUrl}/user/notebooks`;
+    const response: NotebookList = await requestUrl(url);
     return response;
 }
 
-// 获取书架信息
-export async function getBookSync() {
-    let wr_vid = (await getUserInfo()).vid;
-    // let url = `${mainUrl}/web/shelf/sync`;
-    let url = `${baseUrl}/shelf/sync?userVid=${wr_vid}&synckey=0&lectureSynckey=0​`;
-    let response = await requestUrl(url);
+/**
+ * 获取书架信息
+ * @returns 书架数据
+ */
+export async function getBookSync(): Promise<ShelfSync> {
+    const config = getPluginConfig("siyuan-plugin-weread") as WereadConfig;
+    const wr_vid = getCookieBykey(config.Cookie, 'wr_vid');
+    const url = `${baseUrl}/shelf/sync?userVid=${wr_vid}&synckey=0&lectureSynckey=0​`;
+    const response: ShelfSync = await requestUrl(url);
     return response;
 }
 
-// 获取最近书籍？没有有效返回数据
-export async function getRecentBooks() {
-    let wr_vid = (await getUserInfo()).vid;
-    let url = `${baseUrl}/shelf/friendCommon?userVid=${wr_vid}`;
-    let response = await requestUrl(url);
+/**
+ * 获取书籍详细信息，包括标题、作者、出版时间、出版社、ISBN 等
+ * @param book_id 书籍 ID
+ * @returns 书籍详细信息
+ */
+export async function getBookInfos(book_id: string): Promise<BookInfo> {
+    const url = `${baseUrl}/book/info?bookId=${book_id}`;
+    const response: BookInfo = await requestUrl(url);
     return response;
 }
 
-// 获取书籍详细信息，包括标题、作者、出版时间、出版社、ISBN 等
-export async function getBookInfos(book_id: string) {
-    let url = `${baseUrl}/book/info?bookId=${book_id}`;
-    let response = await requestUrl(url);
+/**
+ * 获取书籍章节信息
+ * @param book_id 书籍 ID
+ * @returns 书籍章节信息
+ */
+export async function getBookChapterInfos(book_id: string): Promise<ChapterInfoList> {
+    const url = `${baseUrl}/book/chapterInfos?bookIds=${book_id}&synckeys=0`
+    const response: ChapterInfoList = await requestUrl(url);
     return response;
 }
 
-// 获取书籍章节信息
-export async function getBookChapterInfos(book_id: string) {
-    let url = `${baseUrl}/book/chapterInfos?bookIds=${book_id}&synckeys=0`
-    let response = await requestUrl(url);
+/**
+ * 获取数据标注
+ * @param book_id 书籍 ID
+ * @returns 标注数据
+ */
+export async function getNotebookHighlights(book_id: string): Promise<BookmarkList> {
+    const url = `${baseUrl}/book/bookmarklist?bookId=${book_id}`;
+    const response: BookmarkList = await requestUrl(url);
     return response;
 }
 
-// 获取书籍高亮标注
-export async function getNotebookHighlights(book_id: string) {
-    let url = `${baseUrl}/book/bookmarklist?bookId=${book_id}`;
-    let response = await requestUrl(url);
+/**
+ * 获取书籍热门标注（公众号、导入书籍没有热门标注）
+ * @param book_id 书籍 ID
+ * @returns 热门标注数据
+ */
+export async function getNotebookBestHighlights(book_id: string): Promise<BestBookmarkList> {
+    const url = `${baseUrl}/book/bestbookmarks?bookId=${book_id}`;
+    const response: BestBookmarkList = await requestUrl(url);
     return response;
 }
 
-// 获取书籍热门标注（公众号、导入书籍没有热门标注）
-export async function getNotebookBestHighlights(book_id: string) {
-    let url = `${baseUrl}/book/bestbookmarks?bookId=${book_id}`;
-    let response = await requestUrl(url);
+/**
+ * 获取书籍想法
+ * @param book_id 书籍 ID
+ * @returns 书籍想法数据
+ */
+export async function getNotebookReviews(book_id: string): Promise<ReviewList> {
+    const url = `${baseUrl}/review/list?bookId=${book_id}&listType=11&mine=1&synckey=0`;
+    const response: ReviewList = await requestUrl(url);
     return response;
 }
 
-// 获取书籍想法
-export async function getNotebookReviews(book_id: string) {
-    let url = `${baseUrl}/review/list?bookId=${book_id}&listType=11&mine=1&synckey=0`;
-    let response = await requestUrl(url);
-    return response;
-}
-
-// 获取书籍章节评论（）
-export async function getNotebookBestReviews(book_id: string, chapter_uid: number | string) {
-    let url = `${baseUrl}/review/list?bookId=${book_id}&listType=8&chapterUid=${chapter_uid}&synckey=0&listMode=3`;
-    let response = await requestUrl(url);
+/**
+ * 获取书籍章节评论
+ * @param book_id 书籍 ID
+ * @param chapter_uid 章节 ID
+ * @returns 章节评论信息
+ */
+export async function getNotebookBestReviews(book_id: string, chapter_uid: number | string): Promise<ChapterReviewList> {
+    const url = `${baseUrl}/review/list?bookId=${book_id}&listType=8&chapterUid=${chapter_uid}&synckey=0&listMode=3`;
+    const response: ChapterReviewList = await requestUrl(url);
     return response;
 }
 
 // 获取评论信息？没有返回有效数据
 export async function getNotebookComments(wr_vid: string) {
-    let url = `${baseUrl}/review/list?listType=6&userVid=${wr_vid}&rangeType=2&mine=1&listMode=1`;
-    let response = await requestUrl(url);
+    const url = `${baseUrl}/review/list?listType=6&userVid=${wr_vid}&rangeType=2&mine=1&listMode=1`;
+    const response = await requestUrl(url);
     return response;
 }
 
 /**
  * 获取阅读时长
- * REF: https://github.com/Higurashi-kagome/wereader/blob/e7c85352332e94095dccc34da2dba21c7826e11f/src/background/modules/bg-wereader-api.ts#L116
- * 本年月数据及去年年总结：https://i.weread.qq.com/readdetail 
- * 指定月及该月之前指定数量的月数据：https://i.weread.qq.com/readdetail?baseTimestamp=1612108800&count=3&type=1
- * type=1：获取月数据
- * type=0：获取周数据
- */
-export async function getReadDetail(type=1, count=3, monthTimestamp?: number) {
+ * @param type 获取模式 1: 月数据; 0： 周数据
+ * @param count 
+ * @param monthTimestamp 以秒为单位的 Unix 时间戳
+ * @returns 阅读时长信息
+*/
+export async function getReadDetail(type=1, count=3, monthTimestamp?: number): Promise<ReadDetail> {
+    // REF: https://github.com/Higurashi-kagome/wereader/blob/e7c85352332e94095dccc34da2dba21c7826e11f/src/background/modules/bg-wereader-api.ts#L116
     let url = `${baseUrl}/readdetail`;
 
-    if(monthTimestamp) url = `${url}&baseTimestamp=${monthTimestamp}`;
-    if(count) url = `${url}&count=${count}`;
-    if([0,1].indexOf(type)>-1) url = `${url}&type=${type}`;
-    let response = await requestUrl(url);
+    if (monthTimestamp) url = `${url}&baseTimestamp=${monthTimestamp}`;
+    if (count) url = `${url}&count=${count}`;
+    if ([0,1].indexOf(type) > -1) url = `${url}&type=${type}`;
+    const response: ReadDetail = await requestUrl(url);
     
     return response;
 }
 
 /**
- * 获取每天阅读时长
- * 
+ * 获取每天的阅读数据
+ * @returns 阅读数据
  */
-export async function getReadData() {
-    let url = `${baseUrl}/readdata/summary?synckey=0`;
-    let response = await requestUrl(url);
+export async function getReadData(): Promise<ReadData> {
+    // 获取每月阅读最久的书
+    // /readdata/detail?mode=monthly&defaultPreferBook=0&baseTime=1698768000
+    // 获取总阅读时长最久的书。有所有的统计信息，包括：喜好的书、阅读情况
+    // /readdata/detail?mode=overall&defaultPreferBook=0&baseTime=0
+    const url = `${baseUrl}/readdata/summary?synckey=0`;
+    const response: ReadData = await requestUrl(url);
+    return response;
+}
+
+/**
+ * 获取指定书籍的阅读数据
+ * @returns 阅读数据
+ */
+export async function getReadInfo(bookId: string) {
+    // 获取笔记信息之类的数据需要加其他参数，只获取阅读记录只要 readingDetail 和 bookId 即可
+    // const fullInfo = `?noteCount=1&readingDetail=1&finishedBookIndex=1&readingBookCount=1&finishedBookCount=1&bookId=${bookId}&finishedDate=1`
+    const url = `${baseUrl}/readinfo?readingDetail=1&bookId=${bookId}`;
+    const response = await requestUrl(url);
     return response;
 }
