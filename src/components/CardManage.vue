@@ -4,12 +4,16 @@
         <el-container class="el-container">
             <!-- 侧边栏 -->
             <el-aside class="layout-basic--navbar">
-                <svg class="b3-list-item__graphic" @click="currentRouter = 'View'">
-                    <use xlink:href="#iconInbox"></use>
-                </svg>
-                <svg class="b3-list-item__graphic" @click="currentRouter = 'Charts'">
-                    <use xlink:href="#iconTable"></use>
-                </svg>
+                <div @mouseover.stop.self="showToolTip($event, '收集箱')">
+                    <svg class="b3-list-item__graphic" @click="currentRouter = 'View'">
+                        <use xlink:href="#iconInbox"></use>
+                    </svg>
+                </div>
+                <div @mouseover.stop.self="showToolTip($event, '统计界面')">
+                    <svg class="b3-list-item__graphic" @click="currentRouter = 'Charts'">
+                        <use xlink:href="#iconTable"></use>
+                    </svg>
+                </div>
             </el-aside>
             <!-- 动态组件 -->
             <component :is="routers[currentRouter]" />
@@ -19,6 +23,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { showToolTip } from '../utils/tooltips';
 import NotFound from './card-manage/router/NotFound.vue';
 import Charts from './card-manage/router/Charts.vue';
 import View from './card-manage/router/View.vue';
@@ -46,7 +51,7 @@ const currentRouter = ref("Charts" ?? "NotFound")
     flex-direction: column;
     align-items: center;
 }
-.layout-basic--navbar > svg {
+.layout-basic--navbar > div {
     padding: 5px;
     margin: 5px;
 }
