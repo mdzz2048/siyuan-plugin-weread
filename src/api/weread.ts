@@ -129,12 +129,13 @@ export async function getNotebookComments(wr_vid: string) {
 */
 export async function getReadDetail(type=1, count=3, monthTimestamp?: number): Promise<ReadDetail> {
     // REF: https://github.com/Higurashi-kagome/wereader/blob/e7c85352332e94095dccc34da2dba21c7826e11f/src/background/modules/bg-wereader-api.ts#L116
-    let url = `${baseUrl}/readdetail`;
+    let url = `${baseUrl}/readdetail`
+    let suffix = ""
 
-    if (monthTimestamp) url = `${url}&baseTimestamp=${monthTimestamp}`;
-    if (count) url = `${url}&count=${count}`;
-    if ([0,1].indexOf(type) > -1) url = `${url}&type=${type}`;
-    const response: ReadDetail = await requestUrl(url);
+    if (monthTimestamp) suffix = `${suffix}&baseTimestamp=${monthTimestamp}`;
+    if (count) suffix = `${suffix}&count=${count}`;
+    if ([0,1].indexOf(type) > -1) suffix = `${suffix}&type=${type}`;
+    const response: ReadDetail = await requestUrl(url + suffix.replace("&", "?"));
     
     return response;
 }
@@ -160,7 +161,7 @@ export async function getReadData(): Promise<ReadData> {
 export async function getReadInfo(bookId: string) {
     // 获取笔记信息之类的数据需要加其他参数，只获取阅读记录只要 readingDetail 和 bookId 即可
     // const fullInfo = `?noteCount=1&readingDetail=1&finishedBookIndex=1&readingBookCount=1&finishedBookCount=1&bookId=${bookId}&finishedDate=1`
-    const url = `${baseUrl}/readinfo?readingDetail=1&bookId=${bookId}`;
+    const url = `${baseUrl}/book/readinfo?readingDetail=1&bookId=${bookId}`;
     const response = await requestUrl(url);
     return response;
 }
