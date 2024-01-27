@@ -5,6 +5,7 @@ import { ChapterNoteCard, NoteCard } from "../../../types/card"
 import { Metadata } from "../../../types/weread"
 import { CustomMouseMenu, CustomMouseMenuOptions } from "../commonMenu"
 import { getPcUrl } from "../../../utils/parse"
+import { getReadData, getReadDetail, getReadInfo } from "../../../api/weread"
 
 export const getBookNoteCount = (book: Metadata) => {
     return book?.bookmarkCount + book?.noteCount + book?.reviewCount
@@ -98,6 +99,18 @@ const bookMenuOption: CustomMouseMenuOptions = {
                 // todo: webview 打开网页
                 console.log("在思源打开微信读书: " + url)
             }
+        },
+        {
+            label: "查看阅读数据",
+            fn: async (parmas: Metadata) => {
+                const bookId = parmas.bookId
+                const readData = await getReadData()
+                const readInfo = await getReadInfo(bookId)
+                const readDetail = await getReadDetail(0)
+                console.log("read data: ", readData)
+                console.log("read info: ", readInfo)
+                console.log("read detail: ", readDetail)
+            }
         }
     ]
 }
@@ -157,6 +170,21 @@ const cardMenuOption: CustomMouseMenuOptions = {
                 }
             }
         },
+        { line: true },
+        {
+            label: "复制思源链接",
+            fn: (params: NoteCard) => {
+                console.log(params)
+            }
+        },
+        {
+            label: "复制原始数据",
+            fn: (params: NoteCard) => {
+                const metadataStr = JSON.stringify(params.data)
+                navigator.clipboard.writeText(metadataStr)
+                console.log("复制原始数据", metadataStr)
+            }
+        }
     ]
 }
 const filterMenuOption: CustomMouseMenuOptions = {
